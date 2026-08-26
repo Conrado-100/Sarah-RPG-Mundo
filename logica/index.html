@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forja de Idiomas - Gerador RPG</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Forja de Idiomas 🎲</h1>
+            <p>Gere nomes únicos e imersivos para o seu mundo.</p>
+        </header>
+
+        <main>
+            <div class="secao">
+                <label for="estilo">1. Escolha a cultura / sotaque:</label>
+                <select id="estilo">
+                    <!-- Preenchido pelo JavaScript -->
+                </select>
+            </div>
+
+            <div class="secao">
+                <label for="quantidade">2. Quantos nomes deseja gerar?</label>
+                <input type="number" id="quantidade" value="10" min="1" max="100">
+            </div>
+
+            <div class="secao linha-silabas">
+                <label>3. Tamanho (sílabas):</label>
+                <div class="inputs-silabas">
+                    <input type="number" id="silabas-min" value="2" min="1" max="6">
+                    <span>até</span>
+                    <input type="number" id="silabas-max" value="3" min="1" max="6">
+                </div>
+            </div>
+
+            <div class="secao">
+                <label>4. Opções Extras:</label>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="usar-acentos">
+                    <label for="usar-acentos">Permitir acentos (á, ê, ã)</label>
+                </div>
+                
+                <div class="checkbox-group significados-group">
+                    <input type="checkbox" id="usar-significados" checked>
+                    <label for="usar-significados">Sugerir ideias de:</label>
+                    <select id="tipo-significado">
+                        <option value="Pessoa">Pessoa</option>
+                        <option value="Lugar">Lugar</option>
+                        <option value="Artefato">Artefato</option>
+                        <option value="Geral">Geral</option>
+                    </select>
+                </div>
+            </div>
+
+            <button id="btn-gerar" onclick="gerarNomes()">🪄 GERAR NOMES 🪄</button>
+
+            <div class="secao-resultado">
+                <label>Nomes Gerados:</label>
+                <textarea id="caixa-texto" rows="10" readonly></textarea>
+            </div>
+
+            <div class="botoes-inferiores">
+                <button id="btn-copiar" onclick="copiarTexto()">📋 Copiar</button>
+                <button id="btn-historico" onclick="abrirHistorico()">🕒 Histórico</button>
+                <button id="btn-exportar" onclick="exportarHistorico()">💾 Exportar</button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Janela de Histórico (Invisível por padrão) -->
+    <div id="modal-historico" class="modal">
+        <div class="modal-conteudo">
+            <h2>Histórico de Nomes</h2>
+            <p id="contador-historico">Total: 0</p>
+            <textarea id="caixa-historico" rows="12" readonly></textarea>
+            <button onclick="fecharHistorico()">Fechar</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
