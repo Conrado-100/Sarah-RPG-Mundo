@@ -1,14 +1,18 @@
+/* --- PALETA DE CORES ROXO E AZUL ESCURO --- */
 :root {
-    --fundo-pagina: #121212;
-    --fundo-card: #1e1e1e;
-    --texto-principal: #e0e0e0;
-    --texto-secundario: #a0a0a0;
-    --cor-primaria: #4CAF50;
-    --cor-primaria-hover: #45a049;
-    --cor-azul: #2196F3;
-    --cor-laranja: #FF9800;
-    --cor-cinza: #607D8B;
-    --borda: #333;
+    --bg-fundo: #0b0f19;
+    --bg-card: #111827;
+    --bg-input: #1e293b;
+    --border-color: #334155;
+    --border-purple: #7c3aed;
+    --text-principal: #f8fafc;
+    --text-secundario: #9ca3af;
+    
+    /* Degradê Roxo & Azul Escuro */
+    --gradient-btn: linear-gradient(135deg, #6d28d9 0%, #1e1b4b 100%);
+    --gradient-btn-hover: linear-gradient(135deg, #7c3aed 0%, #0f172a 100%);
+    --sombra-roxo: 0 4px 15px rgba(109, 40, 217, 0.4);
+    --sombra-roxo-hover: 0 6px 22px rgba(124, 58, 237, 0.6);
 }
 
 * {
@@ -19,41 +23,73 @@
 }
 
 body {
-    background-color: var(--fundo-pagina);
-    color: var(--texto-principal);
+    background-color: var(--bg-fundo);
+    color: var(--text-principal);
     display: flex;
     justify-content: center;
-    padding: 20px;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px 10px;
 }
 
 .container {
-    background-color: var(--fundo-card);
-    width: 100%;
     max-width: 500px;
-    padding: 25px;
-    border-radius: 12px;
-    box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+    width: 100%;
+    background-color: var(--bg-card);
+    padding: 30px 24px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+    border: 1px solid #1e293b;
 }
 
 header {
     text-align: center;
-    margin-bottom: 25px;
+    margin-bottom: 24px;
 }
 
-header h1 { margin-bottom: 5px; font-size: 1.8rem; }
-header p { color: var(--texto-secundario); font-size: 0.95rem; }
+header h1 {
+    font-size: 1.8rem;
+    color: #ffffff;
+    margin-bottom: 6px;
+}
 
-.secao { margin-bottom: 15px; }
-.secao label { display: block; margin-bottom: 5px; font-weight: bold; }
+header p {
+    font-size: 0.95rem;
+    color: var(--text-secundario);
+}
 
-input[type="number"], select, textarea {
-    width: 100%;
-    padding: 10px;
-    border-radius: 6px;
-    border: 1px solid var(--borda);
-    background-color: #2c2c2c;
-    color: var(--texto-principal);
+.secao {
+    margin-bottom: 18px;
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    margin-bottom: 6px;
+}
+
+select, input[type="number"], textarea {
+    background-color: var(--bg-input);
+    color: var(--text-principal);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 12px;
     font-size: 1rem;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+select:focus, input[type="number"]:focus, textarea:focus {
+    border-color: var(--border-purple);
+    box-shadow: 0 0 8px rgba(124, 58, 237, 0.5);
+}
+
+.linha-silabas {
+    display: flex;
+    flex-direction: column;
 }
 
 .inputs-silabas {
@@ -62,59 +98,149 @@ input[type="number"], select, textarea {
     gap: 10px;
 }
 
-.inputs-silabas input { width: 80px; }
+.inputs-silabas input {
+    width: 100%;
+    text-align: center;
+}
+
+.inputs-silabas span {
+    color: var(--text-secundario);
+    font-weight: 600;
+}
 
 .checkbox-group {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 10px;
+    gap: 10px;
+    margin-top: 6px;
 }
-.checkbox-group label { margin-bottom: 0; font-weight: normal; }
 
-.significados-group select { width: 120px; padding: 5px; }
-
-button {
-    border: none;
-    padding: 12px;
-    border-radius: 6px;
+.checkbox-group input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #7c3aed;
     cursor: pointer;
-    font-weight: bold;
-    font-size: 1rem;
-    transition: filter 0.2s;
-    color: white;
 }
 
-button:hover { filter: brightness(1.1); }
+.significados-group select {
+    margin-left: auto;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+}
 
-#btn-gerar { width: 100%; background-color: var(--cor-primaria); margin: 10px 0 20px 0; font-size: 1.1rem; }
-#btn-copiar { background-color: var(--cor-azul); flex: 1; }
-#btn-historico { background-color: var(--cor-laranja); flex: 1; }
-#btn-exportar { background-color: var(--cor-cinza); flex: 1; }
+/* Botão Principal de Gerar */
+#btn-gerar {
+    width: 100%;
+    padding: 16px;
+    margin-top: 10px;
+    margin-bottom: 20px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #ffffff;
+    background: var(--gradient-btn);
+    border: 1px solid var(--border-purple);
+    border-radius: 12px;
+    box-shadow: var(--sombra-roxo);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#btn-gerar:hover {
+    background: var(--gradient-btn-hover);
+    box-shadow: var(--sombra-roxo-hover);
+    transform: translateY(-2px);
+}
+
+#btn-gerar:active {
+    transform: translateY(0);
+}
+
+.secao-resultado textarea {
+    width: 100%;
+    resize: vertical;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    background-color: #0f172a;
+}
 
 .botoes-inferiores {
     display: flex;
     gap: 10px;
-    margin-top: 15px;
+    margin-top: 16px;
 }
 
-/* MODAL (Janela do Histórico) */
+.botoes-inferiores button {
+    flex: 1;
+    padding: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-principal);
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.botoes-inferiores button:hover {
+    border-color: var(--border-purple);
+    background-color: #2e1065;
+    color: #ffffff;
+}
+
+/* Modal do Histórico */
 .modal {
     display: none;
     position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(4px);
     justify-content: center;
     align-items: center;
+    padding: 20px;
+    z-index: 1000;
 }
 
 .modal-conteudo {
-    background-color: var(--fundo-card);
-    padding: 20px;
-    border-radius: 8px;
-    width: 90%;
-    max-width: 400px;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-purple);
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 450px;
+    width: 100%;
+    box-shadow: var(--sombra-roxo-hover);
 }
 
-.modal-conteudo h2 { margin-bottom: 10px; }
-.modal-conteudo button { width: 100%; background-color: #f44336; margin-top: 15px; }
+.modal-conteudo h2 {
+    color: #ffffff;
+    margin-bottom: 4px;
+}
+
+.modal-conteudo p {
+    color: var(--text-secundario);
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+}
+
+.modal-conteudo textarea {
+    width: 100%;
+    margin-bottom: 16px;
+    background-color: #0f172a;
+}
+
+.modal-conteudo button {
+    width: 100%;
+    padding: 12px;
+    background: var(--gradient-btn);
+    border: 1px solid var(--border-purple);
+    color: #ffffff;
+    font-weight: bold;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.modal-conteudo button:hover {
+    background: var(--gradient-btn-hover);
+}
