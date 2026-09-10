@@ -239,9 +239,12 @@ async function exportarHistorico() {
 
 function rolarD20() {
     const display = document.getElementById("resultado-d20");
+    const msgDisplay = document.getElementById("mensagem-d20");
     let giros = 0;
     
-    // Animação rápida de sorteio
+    // Limpa a mensagem enquanto rola o dado
+    if (msgDisplay) msgDisplay.innerText = "Sorteando...";
+
     const animacao = setInterval(() => {
         display.style.color = "#ffffff";
         display.innerText = Math.floor(Math.random() * 20) + 1;
@@ -252,13 +255,38 @@ function rolarD20() {
             const valorFinal = Math.floor(Math.random() * 20) + 1;
             display.innerText = valorFinal;
             
-            // Cores especiais para acerto/falha crítica
-            if (valorFinal === 20) {
-                display.style.color = "#4ade80"; // Verde Crítico
-            } else if (valorFinal === 1) {
-                display.style.color = "#f87171"; // Vermelho Falha
-            } else {
-                display.style.color = "#ffffff";
+            // Definição da frase e cor
+            let textoMensagem = "";
+            let corMensagem = "#c084fc"; // Roxo claro padrão
+
+            if (valorFinal === 1) {
+                textoMensagem = "Azarado!";
+                corMensagem = "#f87171"; // Vermelho
+            } else if (valorFinal >= 2 && valorFinal <= 5) {
+                textoMensagem = "Péssimo";
+                corMensagem = "#fb923c"; // Laranja
+            } else if (valorFinal >= 6 && valorFinal <= 10) {
+                textoMensagem = "Um pouco de sorte ein?";
+                corMensagem = "#facc15"; // Amarelo
+            } else if (valorFinal >= 11 && valorFinal <= 15) {
+                textoMensagem = "Uau! A sorte está em dia";
+                corMensagem = "#38bdf8"; // Azul
+            } else if (valorFinal >= 16 && valorFinal <= 18) {
+                textoMensagem = "Você tem boas mãos";
+                corMensagem = "#a78bfa"; // Roxo
+            } else if (valorFinal === 19) {
+                textoMensagem = "Quase ein, quase";
+                corMensagem = "#e879f9"; // Rosa
+            } else if (valorFinal === 20) {
+                textoMensagem = "Você rodou um 20!(Bem pouquinho sortudo)";
+                corMensagem = "#4ade80"; // Verde
+            }
+
+            // Atualiza exibição do número e da mensagem
+            display.style.color = corMensagem;
+            if (msgDisplay) {
+                msgDisplay.innerText = textoMensagem;
+                msgDisplay.style.color = corMensagem;
             }
         }
     }, 40);
