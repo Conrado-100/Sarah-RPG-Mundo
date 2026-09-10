@@ -236,3 +236,30 @@ async function exportarHistorico() {
         URL.revokeObjectURL(url);
     }, 100);
 }
+
+function rolarD20() {
+    const display = document.getElementById("resultado-d20");
+    let giros = 0;
+    
+    // Animação rápida de sorteio
+    const animacao = setInterval(() => {
+        display.style.color = "#ffffff";
+        display.innerText = Math.floor(Math.random() * 20) + 1;
+        giros++;
+        
+        if (giros > 8) {
+            clearInterval(animacao);
+            const valorFinal = Math.floor(Math.random() * 20) + 1;
+            display.innerText = valorFinal;
+            
+            // Cores especiais para acerto/falha crítica
+            if (valorFinal === 20) {
+                display.style.color = "#4ade80"; // Verde Crítico
+            } else if (valorFinal === 1) {
+                display.style.color = "#f87171"; // Vermelho Falha
+            } else {
+                display.style.color = "#ffffff";
+            }
+        }
+    }, 40);
+}
