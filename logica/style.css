@@ -284,4 +284,15 @@ select:focus, input[type="number"]:focus, textarea:focus {
     border: 1px solid var(--border-purple);
     border-radius: 10px;
     box-shadow: var(--sombra-roxo);
+
+    /* Mensagem de sorte do D20 */
+.mensagem-d20 {
+    margin-top: 12px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    min-height: 26px;
+    color: #c084fc;
+    text-shadow: 0 0 10px rgba(192, 132, 252, 0.4);
+    transition: all 0.3s ease;
+}
 }
