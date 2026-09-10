@@ -42,11 +42,34 @@ const ESTILOS = {
     }
 };
 
+// Dicionário de significados massivamente expandido
 const SIGNIFICADOS = {
-    "Pessoa": ["O Sábio", "O Implacável", "A Sombra", "O Guardião", "O Exilado", "Mão de Ferro", "Voz do Vento", "Coração Valente", "O Ilusionista", "Sangue Real", "O Andarilho", "A Lança da Alvorada"],
-    "Lugar": ["Vale Escondido", "Fortaleza", "Cidade Alta", "Ruínas Antigas", "Pico Nevado", "Porto Seguro", "Floresta Densa", "Deserto das Cinzas", "O Abismo", "Santuário", "Torre Esquecida"],
-    "Artefato": ["Lâmina do Destino", "Amuleto Perdido", "Escudo Intransponível", "Relíquia Ancestral", "Cajado das Eras", "Coroa de Espinhos", "Anel do Poder", "Orbe Cristalino", "Manuscrito Negro"],
-    "Geral": ["Luz Guiadora", "Ecos do Passado", "Fogo da Montanha", "Sopro do Vento", "A Aurora", "O Crepúsculo", "Chama Eterna", "Rio de Estrelas", "A Escuridão"]
+    "Pessoa": [
+        "O Sábio", "O Implacável", "A Sombra", "O Guardião", "O Exilado", "Mão de Ferro", 
+        "Voz do Vento", "Coração Valente", "O Ilusionista", "Sangue Real", "O Andarilho", 
+        "A Lança da Alvorada", "O Tecelão do Destino", "Mão Aberta", "O Caçador Noturno", 
+        "Voz de Prata", "Olhos de Serpente", "O Renegado", "Espada do Sol", "Lorde das Sombras", 
+        "Pássaro de Fogo", "Filho da Tempestade", "A Feiticeira", "O Erudito", "Lança Quebrada", 
+        "Espírito Livre", "Mestre das Chamas", "O Sentinela", "Andarilho dos Sonhos", "A Lenda"
+    ],
+    "Lugar": [
+        "Vale Escondido", "Fortaleza", "Cidade Alta", "Ruínas Antigas", "Pico Nevado", 
+        "Porto Seguro", "Floresta Densa", "Deserto das Cinzas", "O Abismo", "Santuário", 
+        "Torre Esquecida", "Mar de Brumas", "Vale dos Ossos", "Encruzilhada", "Gruta Profunda", 
+        "Muralha de Pedra", "Cume do Trovão", "Jardim Suspenso", "Pântano Negro", "Oásis da Esperança",
+        "Refúgio dos Perdidos", "Abismo Sem Fim", "Cultura Esquecida", "Portão de Ouro"
+    ],
+    "Artefato": [
+        "Lâmina do Destino", "Amuleto Perdido", "Escudo Intransponível", "Relíquia Ancestral", 
+        "Cajado das Eras", "Coroa de Espinhos", "Anel do Poder", "Orbe Cristalino", "Manuscrito Negro",
+        "Cálice Sagrado", "Adaga Venenosa", "Livro dos Mortos", "Manto da Invisibilidade", "Espelho da Verdade",
+        "Pedra de Sangue", "Selo Real", "Machado Guerreiro", "Arco do Luar"
+    ],
+    "Geral": [
+        "Luz Guiadora", "Ecos do Passado", "Fogo da Montanha", "Sopro do Vento", "A Aurora", 
+        "O Crepúsculo", "Chama Eterna", "Rio de Estrelas", "A Escuridão", "Sombra Lunar",
+        "Canto da Sereia", "A Promessa", "Vento do Norte", "Segredo Ancestral", "Espírito Selvagem"
+    ]
 };
 
 let historicoNomes = [];
@@ -82,7 +105,6 @@ function capitalizar(texto) {
     return texto.charAt(0).toUpperCase() + texto.slice(1);
 }
 
-// Gera uma sílaba baseada na estrutura do idioma (CV, CVC, V)
 function gerarSilaba(regras) {
     const estrutura = sortear(regras.estruturas);
     let silaba = "";
@@ -114,6 +136,9 @@ function gerarNomes() {
     let nomesGerados = [];
     let tentativas = 0;
 
+    // Cópias locais dos significados para sorteio SEM REPOSIÇÃO durante a geração
+    let significadosDisponiveis = [...SIGNIFICADOS[tipoSig]];
+
     while (nomesGerados.length < qtd && tentativas < 200) {
         tentativas++;
         let qtdSilabas = Math.floor(Math.random() * (maxSilabas - minSilabas + 1)) + minSilabas;
@@ -130,11 +155,17 @@ function gerarNomes() {
         palavra = capitalizar(palavra);
 
         if (usarSignificados) {
-            let conceito = sortear(SIGNIFICADOS[tipoSig]);
+            // Se esgotar a lista de significados na mesma rodada, recarrega a lista
+            if (significadosDisponiveis.length === 0) {
+                significadosDisponiveis = [...SIGNIFICADOS[tipoSig]];
+            }
+            // Retira o significado da lista para que ele não se repita no mesmo lote
+            let idxSignificado = Math.floor(Math.random() * significadosDisponiveis.length);
+            let conceito = significadosDisponiveis.splice(idxSignificado, 1)[0];
+            
             palavra = `${palavra} - (${conceito})`;
         }
 
-        // Garante variedade sem palavras repetidas no mesmo lote
         if (!nomesGerados.includes(palavra)) {
             nomesGerados.push(palavra);
             if (!historicoNomes.includes(palavra)) {
@@ -173,7 +204,6 @@ function fecharHistorico() {
     document.getElementById("modal-historico").style.display = "none";
 }
 
-// Exportação universal (Funciona em Celular e PC)
 async function exportarHistorico() {
     if (historicoNomes.length === 0) {
         alert("O histórico está vazio! Gere alguns nomes primeiro.");
@@ -182,7 +212,6 @@ async function exportarHistorico() {
 
     const textoExportacao = "--- Forja de Idiomas (Nomes Salvos) ---\n\n" + historicoNomes.join("\n");
 
-    // No celular: Abre o menu nativo de compartilhar (WhatsApp, Bloco de Notas, Drive, etc)
     if (navigator.share) {
         try {
             await navigator.share({
@@ -195,7 +224,6 @@ async function exportarHistorico() {
         }
     }
 
-    // No computador: Faz o download do arquivo .txt tradicional
     const blob = new Blob([textoExportacao], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
