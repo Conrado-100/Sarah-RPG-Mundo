@@ -244,3 +244,44 @@ select:focus, input[type="number"]:focus, textarea:focus {
 .modal-conteudo button:hover {
     background: var(--gradient-btn-hover);
 }
+
+
+/* Rolador D20 */
+.d20-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+#btn-d20 {
+    flex: 1;
+    padding: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #ffffff;
+    background: var(--bg-input);
+    border: 1px solid var(--border-purple);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#btn-d20:hover {
+    background-color: #2e1065;
+    box-shadow: var(--sombra-roxo);
+}
+
+.d20-display {
+    min-width: 52px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #ffffff;
+    background: var(--gradient-btn);
+    border: 1px solid var(--border-purple);
+    border-radius: 10px;
+    box-shadow: var(--sombra-roxo);
+}
