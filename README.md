@@ -2,7 +2,9 @@
 # 🎲 Forja de Idiomas - Gerador RPG
 
 Bem-vindo à Forja de Idiomas! Este é um aplicativo web desenvolvido especialmente para auxiliar Mestres de RPG na criação de *worldbuilding* imersivo. Ele gera nomes e línguas fictícias respeitando a regra fonética de cada cultura, rodando inteiramente de forma local e offline no seu navegador.
-
+> **Acesse a aplicação pronta rodando direto no navegador:**
+> 
+> 🚀 **[Clique aqui para abrir o Gerador de Nomes](https://conrado-100.github.io/Sarah-RPG-Mundo/logica/index.html)**
 ---
 
 ## 🎲 Sobre o Projeto
