@@ -1,28 +1,59 @@
-// --- ENGENHARIA DE IDIOMAS ---
+// --- ENGENHARIA DE IDIOMAS EXPANDIDA ---
 const ESTILOS = {
-    "Comum (Humano)": { consoantes: ["b","c","d","f","g","h","j","l","m","n","p","r","s","t","v","z"], vogais: ["a","e","i","o","u"] },
-    "Élfico (Suave)": { consoantes: ["l","m","n","r","s","th","f","v","c"], vogais: ["a","e","i","o","y","ae","ea"] },
-    "Orc (Gutural)": { consoantes: ["k","g","r","z","b","d","gh","kr","gr","th"], vogais: ["a","o","u"] },
-    "Anão (Firme)": { consoantes: ["d","g","k","m","r","t","v","z","br","dr","gr"], vogais: ["a","e","i","o","u"] },
-    "Celestial (Anjos)": { consoantes: ["l","m","s","v","th","z","ph"], vogais: ["a","e","i","ae","io","ia"] },
-    "Abissal (Demônios)": { consoantes: ["x","z","k","v","q","zh","kh","vr"], vogais: ["o","u","ou","uo"] },
-    "Feérico (Fadas)": { consoantes: ["f","l","m","n","s","w","sh"], vogais: ["e","i","y","ie","ei"] },
-    "Cyberpunk (Sci-Fi)": { consoantes: ["x","z","k","v","c","n","t","r","nx"], vogais: ["a","e","i","o","u","y"] }
+    "Comum (Humano)": { 
+        consoantes: ["b","c","d","f","g","h","j","l","m","n","p","r","s","t","v","z","br","cr","dr","fr","gr","pr","tr"], 
+        vogais: ["a","e","i","o","u"],
+        estruturas: ["CV", "CVC", "CV"]
+    },
+    "Élfico (Suave)": { 
+        consoantes: ["l","m","n","r","s","th","f","v","c","dh","sh","ph","y"], 
+        vogais: ["a","e","i","o","y","ae","ea","ia","ie"],
+        estruturas: ["CV", "V", "CV", "CVC"]
+    },
+    "Orc (Gutural)": { 
+        consoantes: ["k","g","r","z","b","d","gh","kr","gr","th","kh","sk","zug","sn","uk"], 
+        vogais: ["a","o","u","ur"],
+        estruturas: ["CVC", "CV", "CVC"]
+    },
+    "Anão (Firme)": { 
+        consoantes: ["d","g","k","m","r","t","v","z","br","dr","gr","khr","thor","grim","krag"], 
+        vogais: ["a","e","i","o","u"],
+        estruturas: ["CVC", "CV", "CVC"]
+    },
+    "Celestial (Anjos)": { 
+        consoantes: ["l","m","s","v","th","z","ph","r","sh"], 
+        vogais: ["a","e","i","ae","io","ia","uel","ael"],
+        estruturas: ["CV", "V", "CV"]
+    },
+    "Abissal (Demônios)": { 
+        consoantes: ["x","z","k","v","q","zh","kh","vr","rrh","gx","tz","xz"], 
+        vogais: ["o","u","ou","uo","a"],
+        estruturas: ["CVC", "CVC", "CV"]
+    },
+    "Feérico (Fadas)": { 
+        consoantes: ["f","l","m","n","s","w","sh","th","ly","ny"], 
+        vogais: ["e","i","y","ie","ei","ia","ae"],
+        estruturas: ["CV", "V", "CV"]
+    },
+    "Cyberpunk (Sci-Fi)": { 
+        consoantes: ["x","z","k","v","c","n","t","r","nx","px","qv","zk"], 
+        vogais: ["a","e","i","o","u","y","io"],
+        estruturas: ["CVC", "CV", "CCV"]
+    }
 };
 
 const SIGNIFICADOS = {
-    "Pessoa": ["O Sábio", "O Implacável", "A Sombra", "O Guardião", "O Exilado", "Mão de Ferro", "Voz do Vento", "Coração Valente", "O Ilusionista", "Sangue Real"],
-    "Lugar": ["Vale Escondido", "Fortaleza", "Cidade Alta", "Ruínas Antigas", "Pico Nevado", "Porto Seguro", "Floresta Densa", "Deserto das Cinzas", "O Abismo", "Santuário"],
+    "Pessoa": ["O Sábio", "O Implacável", "A Sombra", "O Guardião", "O Exilado", "Mão de Ferro", "Voz do Vento", "Coração Valente", "O Ilusionista", "Sangue Real", "O Andarilho", "A Lança da Alvorada"],
+    "Lugar": ["Vale Escondido", "Fortaleza", "Cidade Alta", "Ruínas Antigas", "Pico Nevado", "Porto Seguro", "Floresta Densa", "Deserto das Cinzas", "O Abismo", "Santuário", "Torre Esquecida"],
     "Artefato": ["Lâmina do Destino", "Amuleto Perdido", "Escudo Intransponível", "Relíquia Ancestral", "Cajado das Eras", "Coroa de Espinhos", "Anel do Poder", "Orbe Cristalino", "Manuscrito Negro"],
-    "Geral": ["Luz Guiadora", "Ecos do Passado", "Fogo da Montanha", "Sopro do Vento", "A Aurora", "O Crepúsculo", "Chama Eterna", "Rio de Estrelas"]
+    "Geral": ["Luz Guiadora", "Ecos do Passado", "Fogo da Montanha", "Sopro do Vento", "A Aurora", "O Crepúsculo", "Chama Eterna", "Rio de Estrelas", "A Escuridão"]
 };
 
-// Memória do aplicativo
 let historicoNomes = [];
 
-// Preencher a caixa de seleção de estilos ao carregar a página
 window.onload = function() {
     const selectEstilo = document.getElementById("estilo");
+    if (!selectEstilo) return;
     for (let estilo in ESTILOS) {
         let option = document.createElement("option");
         option.value = estilo;
@@ -31,7 +62,6 @@ window.onload = function() {
     }
 };
 
-// Funções Utilitárias
 function sortear(array) {
     return array[Math.floor(Math.random() * array.length)];
 }
@@ -40,7 +70,7 @@ function aplicarAcento(palavra) {
     const acentos = { 'a': ['á', 'ã', 'â'], 'e': ['é', 'ê'], 'i': ['í'], 'o': ['ó', 'ô'], 'u': ['ú'] };
     let letras = palavra.split('');
     for (let i = 0; i < letras.length; i++) {
-        if (acentos[letras[i]] && Math.random() < 0.15) { // 15% de chance
+        if (acentos[letras[i]] && Math.random() < 0.15) {
             letras[i] = sortear(acentos[letras[i]]);
             break; 
         }
@@ -52,7 +82,17 @@ function capitalizar(texto) {
     return texto.charAt(0).toUpperCase() + texto.slice(1);
 }
 
-// Motor Principal
+// Gera uma sílaba baseada na estrutura do idioma (CV, CVC, V)
+function gerarSilaba(regras) {
+    const estrutura = sortear(regras.estruturas);
+    let silaba = "";
+    for (let char of estrutura) {
+        if (char === "C") silaba += sortear(regras.consoantes);
+        else if (char === "V") silaba += sortear(regras.vogais);
+    }
+    return silaba;
+}
+
 function gerarNomes() {
     const estiloSelecionado = document.getElementById("estilo").value;
     const qtd = parseInt(document.getElementById("quantidade").value);
@@ -72,14 +112,15 @@ function gerarNomes() {
 
     const regras = ESTILOS[estiloSelecionado];
     let nomesGerados = [];
+    let tentativas = 0;
 
-    for (let i = 0; i < qtd; i++) {
+    while (nomesGerados.length < qtd && tentativas < 200) {
+        tentativas++;
         let qtdSilabas = Math.floor(Math.random() * (maxSilabas - minSilabas + 1)) + minSilabas;
         let palavra = "";
 
         for (let s = 0; s < qtdSilabas; s++) {
-            palavra += sortear(regras.consoantes);
-            palavra += sortear(regras.vogais);
+            palavra += gerarSilaba(regras);
         }
 
         if (usarAcentos) {
@@ -93,10 +134,9 @@ function gerarNomes() {
             palavra = `${palavra} - (${conceito})`;
         }
 
-        // Evita repetidos na mesma rolagem
+        // Garante variedade sem palavras repetidas no mesmo lote
         if (!nomesGerados.includes(palavra)) {
             nomesGerados.push(palavra);
-            // Adiciona ao histórico se ainda não existir lá
             if (!historicoNomes.includes(palavra)) {
                 historicoNomes.push(palavra);
             }
@@ -106,7 +146,6 @@ function gerarNomes() {
     document.getElementById("caixa-texto").value = nomesGerados.join("\n");
 }
 
-// Funções da Interface
 function copiarTexto() {
     const texto = document.getElementById("caixa-texto").value;
     if (!texto) {
@@ -115,6 +154,8 @@ function copiarTexto() {
     }
     navigator.clipboard.writeText(texto).then(() => {
         alert("Nomes copiados com sucesso!");
+    }).catch(() => {
+        alert("Erro ao copiar. Selecione o texto e copie manualmente.");
     });
 }
 
@@ -132,22 +173,38 @@ function fecharHistorico() {
     document.getElementById("modal-historico").style.display = "none";
 }
 
-function exportarHistorico() {
+// Exportação universal (Funciona em Celular e PC)
+async function exportarHistorico() {
     if (historicoNomes.length === 0) {
-        alert("O histórico está vazio!");
+        alert("O histórico está vazio! Gere alguns nomes primeiro.");
         return;
     }
-    
-    // Criando um arquivo .txt direto no navegador!
-    const conteudo = "--- Forja de Idiomas (Nomes Salvos) ---\n\n" + historicoNomes.join("\n");
-    const blob = new Blob([conteudo], { type: "text/plain" });
+
+    const textoExportacao = "--- Forja de Idiomas (Nomes Salvos) ---\n\n" + historicoNomes.join("\n");
+
+    // No celular: Abre o menu nativo de compartilhar (WhatsApp, Bloco de Notas, Drive, etc)
+    if (navigator.share) {
+        try {
+            await navigator.share({
+                title: 'Nomes RPG - Forja de Idiomas',
+                text: textoExportacao
+            });
+            return;
+        } catch (err) {
+            if (err.name !== 'AbortError') console.error(err);
+        }
+    }
+
+    // No computador: Faz o download do arquivo .txt tradicional
+    const blob = new Blob([textoExportacao], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
-    
     const a = document.createElement("a");
     a.href = url;
     a.download = "nomes_campanha.txt";
     document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }, 100);
 }
