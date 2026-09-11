@@ -14,33 +14,56 @@
             <p>Selecione os terrenos, pinte o grid e monte o mapa perfeito para o seu RPG.</p>
         </header>
 
-        <!-- Barra de Ferramentas / Paleta de Terrenos -->
+        <!-- Barra de Ferramentas / Paleta Organizada -->
         <div class="palette-container">
-            <span class="palette-title">🎨 Terrenos Base:</span>
-            <div class="palette-buttons">
-                <button class="tile-btn active" data-type="grass" style="--tile-color: #22c55e;">🌱 Grama</button>
-                <button class="tile-btn" data-type="dirt" style="--tile-color: #78350f;">🪵 Terra</button>
-                <button class="tile-btn" data-type="water" style="--tile-color: #0284c7;">🌊 Água</button>
-                <button class="tile-btn" data-type="stone" style="--tile-color: #64748b;">🪨 Pedra</button>
-                <button class="tile-btn" data-type="wall" style="--tile-color: #334155;">🧱 Parede</button>
-                <button class="tile-btn" data-type="sand" style="--tile-color: #eab308;">🏜️ Areia (Deserto)</button>
-                <button class="tile-btn" data-type="savannah_grass" style="--tile-color: #ca8a04;">🌾 Savana</button>
-                <button class="tile-btn" data-type="ice" style="--tile-color: #bae6fd;">❄️ Gelo / Neve</button>
-                <button class="tile-btn" data-type="mountain_rock" style="--tile-color: #475569;">🏔️ Rocha Montanha</button>
-                <button class="tile-btn" data-type="taiga" style="--tile-color: #3f5e3d;">🌲 Solo Taiga</button>
-            </div>
+            <fieldset class="palette-fieldset">
+                <legend class="palette-title">🎨 Terrenos Base:</legend>
+                <div class="palette-buttons">
+                    <button class="tile-btn active" data-type="grass" style="--tile-color: #22c55e;">🌱 Grama</button>
+                    <button class="tile-btn" data-type="dirt" style="--tile-color: #78350f;">🪵 Terra</button>
+                    <button class="tile-btn" data-type="water" style="--tile-color: #0284c7;">🌊 Água</button>
+                    <button class="tile-btn" data-type="stone" style="--tile-color: #64748b;">🪨 Pedra</button>
+                    <button class="tile-btn" data-type="sand" style="--tile-color: #eab308;">🏜️ Areia</button>
+                    <button class="tile-btn" data-type="savannah_grass" style="--tile-color: #ca8a04;">🌾 Savana</button>
+                    <button class="tile-btn" data-type="ice" style="--tile-color: #bae6fd;">❄️ Gelo</button>
+                    <button class="tile-btn" data-type="mountain_rock" style="--tile-color: #475569;">🏔️ Rocha</button>
+                    <button class="tile-btn" data-type="taiga" style="--tile-color: #3f5e3d;">🌲 Solo Taiga</button>
+                    <button class="tile-btn" data-type="erase" style="--tile-color: #0f172a;">🧹 Borracha</button>
+                </div>
+            </fieldset>
 
-            <span class="palette-title" style="margin-top: 10px;">🌲 Vegetação (1x2) & Objetos:</span>
-            <div class="palette-buttons">
-                <button class="tile-btn" data-type="tree_taiga" style="--tile-color: #15803d;">🌲 Pinheiro Taiga (1x2)</button>
-                <button class="tile-btn" data-type="tree" style="--tile-color: #22c55e;">🌳 Árvore Comum (1x2)</button>
-                <button class="tile-btn" data-type="cactus" style="--tile-color: #16a34a;">🌵 Cacto (1x2)</button>
-                <button class="tile-btn" data-type="tree_savannah" style="--tile-color: #a16207;">🌳 Acácia Savana (1x2)</button>
-                <button class="tile-btn" data-type="tree_snow" style="--tile-color: #38bdf8;">🌲 Pinheiro Neve (1x2)</button>
-                <button class="tile-btn" data-type="house" style="--tile-color: #ea580c;">🏠 Casa (2x2)</button>
-                <button class="tile-btn" data-type="danger" style="--tile-color: #ef4444;">💀 Perigo / Chefe</button>
-                <button class="tile-btn" data-type="erase" style="--tile-color: #0f172a;">🧹 Borracha</button>
-            </div>
+            <fieldset class="palette-fieldset" style="margin-top: 10px;">
+                <legend class="palette-title">🌲 Vegetação (1x2):</legend>
+                <div class="palette-buttons">
+                    <button class="tile-btn" data-type="tree_taiga" style="--tile-color: #15803d;">🌲 Taiga (1x2)</button>
+                    <button class="tile-btn" data-type="tree" style="--tile-color: #22c55e;">🌳 Comum (1x2)</button>
+                    <button class="tile-btn" data-type="cactus" style="--tile-color: #16a34a;">🌵 Cacto (1x2)</button>
+                    <button class="tile-btn" data-type="tree_savannah" style="--tile-color: #a16207;">🌳 Savana (1x2)</button>
+                    <button class="tile-btn" data-type="tree_snow" style="--tile-color: #38bdf8;">🌲 Neve (1x2)</button>
+                </div>
+            </fieldset>
+
+            <fieldset class="palette-fieldset" style="margin-top: 10px;">
+                <legend class="palette-title">🏰 Estruturas Militares & Moradias:</legend>
+                <div class="palette-buttons">
+                    <button class="tile-btn" data-type="house" style="--tile-color: #ea580c;">🏠 Casa (2x2)</button>
+                    <button class="tile-btn" data-type="tower" style="--tile-color: #94a3b8;">🏰 Torre (2x2)</button>
+                    <button class="tile-btn" data-type="gatehouse" style="--tile-color: #334155;">🚪 Portão Muralha (2x2)</button>
+                    <button class="tile-btn" data-type="wall_improved" style="--tile-color: #1e293b;">🧱 Muralha Melhorada (1x1)</button>
+                    <button class="tile-btn" data-type="castle_6x6" style="--tile-color: #dc2626;">👑 Castelo (6x6)</button>
+                    <button class="tile-btn" data-type="danger" style="--tile-color: #ef4444;">💀 Perigo</button>
+                </div>
+            </fieldset>
+
+            <fieldset class="palette-fieldset" style="margin-top: 10px;">
+                <legend class="palette-title">⚔️ Unidades Militares:</legend>
+                <div class="palette-buttons">
+                    <button class="tile-btn" data-type="soldier_archer" style="--tile-color: #22c55e;">🏹 Arqueiro</button>
+                    <button class="tile-btn" data-type="soldier_knight" style="--tile-color: #38bdf8;">🛡️ Cavaleiro</button>
+                    <button class="tile-btn" data-type="soldier_pikeman" style="--tile-color: #ca8a04;">🔱 Piqueiro</button>
+                    <button class="tile-btn" data-type="soldier_crossbowman" style="--tile-color: #ef4444;">🎯 Besteiro</button>
+                </div>
+            </fieldset>
         </div>
 
         <!-- Área do Mapa (Canvas 12x24) -->
