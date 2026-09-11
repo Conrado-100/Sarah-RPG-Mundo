@@ -105,7 +105,7 @@ function drawPineTop(posX, posY, p, mainColor, highlightColor) {
     ctx.fillRect(posX + p * 2, posY + p * 4, p * 1.5, p * 0.8);
 }
 
-// Muralha 1x1 Melhorada
+// Muralha 1x1
 function drawImprovedWall(posX, posY, p) {
     ctx.fillStyle = '#334155';
     ctx.fillRect(posX + p * 0.5, posY + p * 2, p * 7, p * 6);
@@ -117,7 +117,7 @@ function drawImprovedWall(posX, posY, p) {
     ctx.fillRect(posX + p * 5.5, posY + p * 0.5, p * 2, p * 1.5);
 }
 
-// Desenho da Camada Superior (Objetos e Tropas Transparentes)
+// Desenho da Camada Superior (Objetos e Tropas)
 function drawObjectTexture(type, x, y) {
     const posX = x * TILE_SIZE;
     const posY = y * TILE_SIZE;
@@ -179,52 +179,63 @@ function drawObjectTexture(type, x, y) {
         ctx.fillStyle = '#78350f'; ctx.fillRect(posX + p * 2, posY + p * 2, p * 3, p * 6);
     }
 
-    /* --- NOVA TORRE DETALHADA 3x2 --- */
-    else if (type.startsWith('tower_3x2_')) {
+    /* --- NOVA TORRE DE PEDRA (2 LARGURA x 3 ALTURA) --- */
+    else if (type.startsWith('tower_2x3_')) {
         const parts = type.split('_r')[1].split('c');
         const r = parseInt(parts[0]);
         const c = parseInt(parts[1]);
 
-        // Linha Superior (Topo com Ameias e Telhado de Pedra)
+        // Row 0: Topo alargado com Ameias (Crenellations)
         if (r === 0) {
-            ctx.fillStyle = '#334155'; // Pedra da torre
-            ctx.fillRect(posX, posY + p * 2, p * 8, p * 6);
-            ctx.fillStyle = '#1e293b'; // Sombra
-            ctx.fillRect(posX, posY + p * 7, p * 8, p);
-            
-            // Ameias do Topo
-            ctx.fillStyle = '#475569';
-            if (c === 0) { ctx.fillRect(posX + p, posY + p, p * 2, p * 2); ctx.fillRect(posX + p * 5, posY + p, p * 2, p * 2); }
-            if (c === 1) { ctx.fillRect(posX + p * 1, posY + p, p * 2, p * 2); ctx.fillRect(posX + p * 5, posY + p, p * 2, p * 2); }
-            if (c === 2) { ctx.fillRect(posX + p * 1, posY + p, p * 2, p * 2); ctx.fillRect(posX + p * 5, posY + p, p * 2, p * 2); }
+            ctx.fillStyle = '#64748b';
+            ctx.fillRect(posX, posY + p * 3, p * 8, p * 5); 
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(posX, posY + p * 7, p * 8, p); 
 
-            // Frestas de tiro nas torres das pontas
-            if (c === 0 || c === 2) {
-                ctx.fillStyle = '#0f172a';
-                ctx.fillRect(posX + p * 3.5, posY + p * 4, p, p * 2.5);
+            ctx.fillStyle = '#94a3b8';
+            if (c === 0) {
+                ctx.fillRect(posX, posY + p * 1, p * 2.5, p * 2);
+                ctx.fillRect(posX + p * 4, posY + p * 1, p * 2.5, p * 2);
+            } else {
+                ctx.fillRect(posX + p * 1.5, posY + p * 1, p * 2.5, p * 2);
+                ctx.fillRect(posX + p * 5.5, posY + p * 1, p * 2.5, p * 2);
             }
         }
-        // Linha Inferior (Base com Pedra e Porta Central)
+        // Row 1: Corpo vertical com Janela Arqueada
         else if (r === 1) {
-            ctx.fillStyle = '#475569'; // Base reforçada
-            ctx.fillRect(posX, posY, p * 8, p * 8);
+            ctx.fillStyle = '#64748b';
+            ctx.fillRect(posX + p * 1, posY, p * 6, p * 8); 
+            
             ctx.fillStyle = '#334155';
-            ctx.fillRect(posX, posY + p * 2, p * 8, p * 0.8);
-            ctx.fillRect(posX, posY + p * 5, p * 8, p * 0.8);
+            ctx.fillRect(posX + p * 1, posY + p * 2, p * 6, p * 0.8);
+            ctx.fillRect(posX + p * 1, posY + p * 5, p * 6, p * 0.8);
 
-            // Porta Arqueada de Madeira (Centro do 3x2)
-            if (c === 1) {
-                ctx.fillStyle = '#1e293b'; // Arco de pedra
-                ctx.fillRect(posX + p * 1.5, posY + p * 1, p * 5, p * 7);
-                ctx.fillStyle = '#78350f'; // Madeira da porta
-                ctx.fillRect(posX + p * 2, posY + p * 2, p * 4, p * 6);
-                ctx.fillStyle = '#facc15'; // Fechadura/Maçaneta
-                ctx.fillRect(posX + p * 5, posY + p * 4, p, p);
+            // Janela no Centro entre as duas colunas
+            if (c === 0) {
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(posX + p * 4.5, posY + p * 3, p * 2.5, p * 3.5);
+                ctx.fillStyle = '#e2e8f0'; 
+                ctx.fillRect(posX + p * 4, posY + p * 3, p * 0.5, p * 4);
+            } else {
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(posX, posY + p * 3, p * 2.5, p * 3.5);
+                ctx.fillStyle = '#e2e8f0';
+                ctx.fillRect(posX + p * 2.5, posY + p * 3, p * 0.5, p * 4);
             }
+        }
+        // Row 2: Base alargada (Pedestal)
+        else if (r === 2) {
+            ctx.fillStyle = '#64748b';
+            ctx.fillRect(posX + p * 1, posY, p * 6, p * 3);
+            ctx.fillRect(posX, posY + p * 3, p * 8, p * 5); 
+            
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(posX, posY + p * 3, p * 8, p * 0.8);
+            ctx.fillRect(posX, posY + p * 7, p * 8, p);
         }
     }
 
-    /* --- PORTÃO DA MURALHA (GATEHOUSE) 2x2 --- */
+    /* --- PORTÃO DA MURALHA (2x2) --- */
     else if (type === 'gatehouse_tl' || type === 'gatehouse_tr') drawImprovedWall(posX, posY, p);
     else if (type === 'gatehouse_bl') {
         ctx.fillStyle = '#334155'; ctx.fillRect(posX + p * 1, posY, p * 7, p * 8);
@@ -236,59 +247,99 @@ function drawObjectTexture(type, x, y) {
         ctx.fillStyle = '#78350f'; ctx.fillRect(posX, posY + p * 2, p * 3, p * 6);
     }
 
-    /* --- NOVO CASTELO IMPONENTE REDESENHADO (6x6) --- */
+    /* --- CASTELO MEDIEVAL REDESENHADO (6x6) --- */
     else if (type.startsWith('castle_6x6_')) {
         const parts = type.split('_r')[1].split('c');
         const r = parseInt(parts[0]);
         const c = parseInt(parts[1]);
 
-        // Textura base do castelo (Pedra Nobre)
-        ctx.fillStyle = '#475569';
-        ctx.fillRect(posX, posY, p * 8, p * 8);
+        const isLeftTower = (c === 0 || c === 1);
+        const isRightTower = (c === 4 || c === 5);
+        const isCenterWall = (c === 2 || c === 3);
 
-        // Torres de Canto (Ameias e Telhado)
-        if ((r < 2 || r >= 4) && (c < 2 || c >= 4)) {
-            ctx.fillStyle = '#334155';
-            ctx.fillRect(posX, posY, p * 8, p * 8);
-            if (r === 0 || r === 4) {
+        // Row 0: Bandeiras e Topo dos Telhados Cônicos
+        if (r === 0) {
+            if (isLeftTower) {
+                if (c === 0) {
+                    ctx.fillStyle = '#334155'; ctx.fillRect(posX + p * 6, posY + p * 1, p * 0.8, p * 7);
+                    ctx.fillStyle = '#dc2626'; ctx.fillRect(posX + p * 1, posY + p * 2, p * 5, p * 3);
+                } else {
+                    ctx.fillStyle = '#1e293b';
+                    ctx.beginPath(); ctx.moveTo(posX, posY + p * 8); ctx.lineTo(posX + p * 2, posY + p * 5); ctx.lineTo(posX + p * 4, posY + p * 8); ctx.fill();
+                }
+            } else if (isRightTower) {
+                if (c === 4) {
+                    ctx.fillStyle = '#1e293b';
+                    ctx.beginPath(); ctx.moveTo(posX + p * 4, posY + p * 8); ctx.lineTo(posX + p * 6, posY + p * 5); ctx.lineTo(posX + p * 8, posY + p * 8); ctx.fill();
+                } else {
+                    ctx.fillStyle = '#334155'; ctx.fillRect(posX + p * 2, posY + p * 1, p * 0.8, p * 7);
+                    ctx.fillStyle = '#dc2626'; ctx.fillRect(posX + p * 2.8, posY + p * 2, p * 5, p * 3);
+                }
+            }
+        }
+        // Row 1: Telhados Cônicos Escuros
+        else if (r === 1) {
+            if (isLeftTower || isRightTower) {
                 ctx.fillStyle = '#1e293b';
-                ctx.fillRect(posX + p * 1, posY + p * 1, p * 6, p * 2);
+                ctx.fillRect(posX, posY, p * 8, p * 8);
+                ctx.fillStyle = '#334155';
+                ctx.fillRect(posX + p * 2, posY + p * 2, p * 4, p * 4);
             }
         }
-        // Fortaleza Central / Donjon (Centro do Castelo: R1-R3, C2-C3)
-        else if (r >= 1 && r <= 3 && c >= 2 && c <= 3) {
-            ctx.fillStyle = '#1e293b'; // Muralha escura da fortaleza
-            ctx.fillRect(posX, posY, p * 8, p * 8);
-
-            if (r === 1) { // Telhado Nobre Vermelho do Donjon
-                ctx.fillStyle = '#dc2626';
-                ctx.fillRect(posX + p * 1, posY + p * 2, p * 6, p * 6);
-            } else if (r === 2) { // Janelas com vitral azul
-                ctx.fillStyle = '#0284c7';
-                ctx.fillRect(posX + p * 2, posY + p * 3, p * 4, p * 3);
+        // Row 2: Borda das Torres e Ameias da Muralha Central
+        else if (r === 2) {
+            if (isLeftTower || isRightTower) {
+                ctx.fillStyle = '#64748b'; ctx.fillRect(posX, posY, p * 8, p * 8);
+                ctx.fillStyle = '#334155'; ctx.fillRect(posX, posY + p * 7, p * 8, p);
+            } else if (isCenterWall) {
+                ctx.fillStyle = '#64748b'; ctx.fillRect(posX, posY + p * 3, p * 8, p * 5);
+                ctx.fillStyle = '#94a3b8';
+                ctx.fillRect(posX + p * 1, posY + p * 1, p * 2.5, p * 2);
+                ctx.fillRect(posX + p * 4.5, posY + p * 1, p * 2.5, p * 2);
             }
         }
-        // Muralhas Conectoras
-        else {
-            ctx.fillStyle = '#64748b';
-            ctx.fillRect(posX, posY + p * 2, p * 8, p * 4);
-            ctx.fillStyle = '#334155';
-            ctx.fillRect(posX, posY + p * 1, p * 2, p * 2);
-            ctx.fillRect(posX + p * 4, posY + p * 1, p * 2, p * 2);
-        }
+        // Row 3: Corpo Principal das Torres e Muralha com Janelas Arqueadas
+        else if (r === 3) {
+            ctx.fillStyle = '#64748b'; ctx.fillRect(posX, posY, p * 8, p * 8);
+            ctx.fillStyle = '#475569'; ctx.fillRect(posX, posY + p * 4, p * 8, p * 0.8);
 
-        // Grande Portão Principal (Frente do Castelo: R5, C2-C3)
-        if (r === 5 && (c === 2 || c === 3)) {
-            ctx.fillStyle = '#78350f'; // Madeira
-            ctx.fillRect(posX, posY + p * 1, p * 8, p * 7);
-            ctx.fillStyle = '#ef4444'; // Ferragens
-            ctx.fillRect(posX + p * 2, posY + p * 2, p * 4, p);
+            if (c === 0 || c === 5) {
+                ctx.fillStyle = '#0f172a'; ctx.fillRect(posX + p * 3, posY + p * 2, p * 2.5, p * 4);
+            } else if (c === 2 || c === 3) {
+                ctx.fillStyle = '#0f172a'; ctx.fillRect(posX + p * 2.5, posY + p * 2, p * 3, p * 4.5);
+            }
+        }
+        // Row 4: Parte Inferior da Alvenaria e Arco do Portão
+        else if (r === 4) {
+            ctx.fillStyle = '#64748b'; ctx.fillRect(posX, posY, p * 8, p * 8);
+            ctx.fillStyle = '#475569'; ctx.fillRect(posX, posY + p * 3, p * 8, p * 0.8);
+
+            if (c === 2) {
+                ctx.fillStyle = '#78350f'; ctx.fillRect(posX + p * 3, posY + p * 4, p * 5, p * 4);
+                ctx.fillStyle = '#451a03'; ctx.fillRect(posX + p * 3, posY + p * 4, p * 5, p * 0.8);
+            } else if (c === 3) {
+                ctx.fillStyle = '#78350f'; ctx.fillRect(posX, posY + p * 4, p * 5, p * 4);
+                ctx.fillStyle = '#451a03'; ctx.fillRect(posX, posY + p * 4, p * 5, p * 0.8);
+            }
+        }
+        // Row 5: Grande Portão Arqueado de Madeira com Detalhes de Ferro
+        else if (r === 5) {
+            ctx.fillStyle = '#64748b'; ctx.fillRect(posX, posY, p * 8, p * 8);
+
+            if (c === 2) {
+                ctx.fillStyle = '#78350f'; ctx.fillRect(posX + p * 3, posY, p * 5, p * 8);
+                ctx.fillStyle = '#0f172a'; ctx.fillRect(posX + p * 3, posY + p * 3, p * 5, p * 0.8);
+                ctx.fillRect(posX + p * 7, posY, p * 1, p * 8);
+            } else if (c === 3) {
+                ctx.fillStyle = '#78350f'; ctx.fillRect(posX, posY, p * 5, p * 8);
+                ctx.fillStyle = '#0f172a'; ctx.fillRect(posX, posY + p * 3, p * 5, p * 0.8);
+                ctx.fillStyle = '#facc15'; ctx.fillRect(posX + p * 1.5, posY + p * 4, p, p * 1.5);
+            }
         }
     }
 
-    /* --- UNIDADES MILITAR COM TRANSPARÊNCIA DE TERRENO --- */
+    /* --- UNIDADES MILITARES --- */
     else if (type.startsWith('soldier_')) {
-        // Círculo base da unidade (sem alterar a cor do terreno do fundo)
         ctx.fillStyle = '#0f172a';
         ctx.beginPath();
         ctx.arc(posX + TILE_SIZE / 2, posY + TILE_SIZE / 2, TILE_SIZE / 3, 0, Math.PI * 2);
@@ -297,48 +348,41 @@ function drawObjectTexture(type, x, y) {
         if (type === 'soldier_archer') {
             ctx.fillStyle = '#22c55e';
             ctx.beginPath(); ctx.arc(posX + TILE_SIZE / 2, posY + TILE_SIZE / 2, TILE_SIZE / 4, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = '#a16207';
-            ctx.fillRect(posX + p * 2, posY + p * 5, p * 1, p * 2);
+            ctx.fillStyle = '#a16207'; ctx.fillRect(posX + p * 2, posY + p * 5, p * 1, p * 2);
         }
         else if (type === 'soldier_knight') {
             ctx.fillStyle = '#38bdf8';
             ctx.beginPath(); ctx.arc(posX + TILE_SIZE / 2, posY + TILE_SIZE / 2, TILE_SIZE / 4, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = '#94a3b8';
-            ctx.fillRect(posX + p * 5.5, posY + p * 1.5, p * 1, p * 5);
+            ctx.fillStyle = '#94a3b8'; ctx.fillRect(posX + p * 5.5, posY + p * 1.5, p * 1, p * 5);
         }
         else if (type === 'soldier_pikeman') {
             ctx.fillStyle = '#ca8a04';
             ctx.beginPath(); ctx.arc(posX + TILE_SIZE / 2, posY + TILE_SIZE / 2, TILE_SIZE / 4, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = '#78350f';
-            ctx.fillRect(posX + p * 5, posY + p * 1, p * 1, p * 6);
+            ctx.fillStyle = '#78350f'; ctx.fillRect(posX + p * 5, posY + p * 1, p * 1, p * 6);
         }
         else if (type === 'soldier_crossbowman') {
             ctx.fillStyle = '#ef4444';
             ctx.beginPath(); ctx.arc(posX + TILE_SIZE / 2, posY + TILE_SIZE / 2, TILE_SIZE / 4, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = '#a16207';
-            ctx.fillRect(posX + p * 2, posY + p * 4, p * 4, p * 1.5);
+            ctx.fillStyle = '#a16207'; ctx.fillRect(posX + p * 2, posY + p * 4, p * 4, p * 1.5);
         }
     }
 }
 
-// Renderizar o Mapa Inteiro
+// Renderizar o Mapa Completo
 function renderMap() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Passagem 1: Desenhar a camada de Terreno Base
     for (let y = 0; y < GRID_ROWS; y++) {
         for (let x = 0; x < GRID_COLS; x++) {
             drawTerrainTexture(terrainGrid[y][x], x, y);
         }
     }
 
-    // Passagem 2: Desenhar a camada de Objetos/Tropas (Transparente por cima)
     for (let y = 0; y < GRID_ROWS; y++) {
         for (let x = 0; x < GRID_COLS; x++) {
             if (objectGrid[y][x]) {
                 drawObjectTexture(objectGrid[y][x], x, y);
             }
-            // Grade do Mapa
             ctx.strokeStyle = 'rgba(30, 41, 59, 0.3)';
             ctx.lineWidth = 1;
             ctx.strokeRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
@@ -346,7 +390,6 @@ function renderMap() {
     }
 }
 
-// Obter Posição das Células
 function getCoordinates(e) {
     const rect = canvas.getBoundingClientRect();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -361,21 +404,17 @@ function getCoordinates(e) {
     return { x, y };
 }
 
-// Pintar as Células nas Duas Camadas
 function paintTile(e) {
     const { x, y } = getCoordinates(e);
 
     if (x >= 0 && x < GRID_COLS && y >= 0 && y < GRID_ROWS) {
-        // PINTURA DE TERRENO BASE
         if (TILE_COLORS[currentTile] && currentTile !== 'erase') {
             terrainGrid[y][x] = currentTile;
         } 
-        // BORRACHA
         else if (currentTile === 'erase') {
             if (objectGrid[y][x]) objectGrid[y][x] = null;
             else terrainGrid[y][x] = 'grass';
         }
-        // CASTELO 6x6
         else if (currentTile === 'castle_6x6') {
             if (x < GRID_COLS - 5 && y < GRID_ROWS - 5) {
                 for (let r = 0; r < 6; r++) {
@@ -385,17 +424,16 @@ function paintTile(e) {
                 }
             }
         }
-        // TORRE GRANDE 3x2 (3 Colunas de largura x 2 Linhas de altura)
-        else if (currentTile === 'tower_3x2') {
-            if (x < GRID_COLS - 2 && y < GRID_ROWS - 1) {
-                for (let r = 0; r < 2; r++) {
-                    for (let c = 0; c < 3; c++) {
-                        objectGrid[y + r][x + c] = `tower_3x2_r${r}c${c}`;
+        // TORRE 2x3 (2 Colunas por 3 Linhas)
+        else if (currentTile === 'tower_2x3') {
+            if (x < GRID_COLS - 1 && y < GRID_ROWS - 2) {
+                for (let r = 0; r < 3; r++) {
+                    for (let c = 0; c < 2; c++) {
+                        objectGrid[y + r][x + c] = `tower_2x3_r${r}c${c}`;
                     }
                 }
             }
         }
-        // ESTRUTURAS 2x2 (Casa, Portão)
         else if (['house', 'gatehouse'].includes(currentTile)) {
             if (x < GRID_COLS - 1 && y < GRID_ROWS - 1) {
                 objectGrid[y][x] = currentTile + '_tl';
@@ -404,14 +442,12 @@ function paintTile(e) {
                 objectGrid[y + 1][x + 1] = currentTile + '_br';
             }
         }
-        // VEGETAÇÃO 1x2
         else if (['tree_taiga', 'tree', 'cactus', 'tree_savannah', 'tree_snow'].includes(currentTile)) {
             if (y < GRID_ROWS - 1) {
                 objectGrid[y][x] = currentTile + '_top';
                 objectGrid[y + 1][x] = currentTile + '_bottom';
             }
         }
-        // OBJETOS E TROPAS 1x1
         else {
             objectGrid[y][x] = currentTile;
         }
@@ -420,7 +456,6 @@ function paintTile(e) {
     }
 }
 
-// Eventos
 canvas.addEventListener('mousedown', (e) => { isDrawing = true; paintTile(e); });
 canvas.addEventListener('mousemove', (e) => { if (isDrawing) paintTile(e); });
 canvas.addEventListener('mouseup', () => isDrawing = false);
