@@ -2,154 +2,127 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 body {
     background-color: #0b0f19;
-    color: #f8fafc;
+    color: #f1f5f9;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     display: flex;
     justify-content: center;
-    align-items: center;
-    min-height: 100vh;
     padding: 20px 10px;
 }
 
 .app-container {
-    max-width: 600px;
     width: 100%;
-    background-color: #111827;
-    padding: 24px;
-    border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
-    border: 1px solid #1e293b;
+    max-width: 520px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.header {
     text-align: center;
 }
 
+.btn-back {
+    display: inline-block;
+    color: #38bdf8;
+    text-decoration: none;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+}
+
 .header h1 {
-    font-size: 1.6rem;
-    color: #ffffff;
-    margin-bottom: 4px;
+    font-size: 1.5rem;
+    color: #f8fafc;
 }
 
 .header p {
     font-size: 0.85rem;
-    color: #9ca3af;
-    margin-bottom: 20px;
+    color: #94a3b8;
 }
 
-/* Paleta de Terrenos */
 .palette-container {
     background-color: #1e293b;
     padding: 12px;
-    border-radius: 12px;
+    border-radius: 8px;
     border: 1px solid #334155;
-    margin-bottom: 16px;
 }
 
 .palette-title {
+    display: block;
     font-size: 0.9rem;
     font-weight: bold;
-    color: #c084fc;
-    display: block;
     margin-bottom: 8px;
+    color: #cbd5e1;
 }
 
 .palette-buttons {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    justify-content: center;
+    gap: 6px;
 }
 
 .tile-btn {
-    padding: 8px 12px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #ffffff;
     background-color: #0f172a;
-    border: 2px solid var(--tile-color);
-    border-radius: 8px;
+    color: #f1f5f9;
+    border: 1px solid #334155;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
     cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.tile-btn:hover {
-    background-color: var(--tile-color);
-    color: #ffffff;
+    transition: all 0.2s;
 }
 
 .tile-btn.active {
-    box-shadow: 0 0 10px var(--tile-color);
-    background-color: var(--tile-color);
+    border-color: var(--tile-color);
+    box-shadow: 0 0 8px var(--tile-color);
+    background-color: #1e293b;
+    font-weight: bold;
 }
 
-/* Canvas do Mapa */
-.canvas-wrapper {
+.canvas-container {
     display: flex;
     justify-content: center;
-    margin-bottom: 16px;
-}
-
-canvas {
-    background-color: #030712;
-    border: 2px solid #7c3aed;
+    align-items: center;
+    background-color: #020617;
+    padding: 10px;
     border-radius: 10px;
-    box-shadow: 0 0 15px rgba(124, 58, 237, 0.3);
-    cursor: crosshair;
-    max-width: 100%;
-    height: auto;
+    border: 2px solid #334155;
 }
 
-/* Botões de Ação */
-.action-buttons {
+/* Garante o toque suave no celular sem rolar a tela */
+#mapCanvas {
+    width: 100%;
+    max-width: 480px;
+    height: auto;
+    aspect-ratio: 1 / 2;
+    border-radius: 4px;
+    touch-action: none; 
+    cursor: crosshair;
+}
+
+.actions {
     display: flex;
     gap: 10px;
-    margin-bottom: 16px;
 }
 
-.action-buttons button {
+.btn-action {
     flex: 1;
-    padding: 12px;
-    font-size: 0.9rem;
-    font-weight: bold;
-    border-radius: 10px;
+    padding: 10px;
     border: none;
+    border-radius: 6px;
+    font-weight: bold;
     cursor: pointer;
-    transition: all 0.2s ease;
 }
 
-#btn-export {
-    background: linear-gradient(135deg, #6d28d9 0%, #1e1b4b 100%);
-    border: 1px solid #7c3aed;
-    color: #ffffff;
-    box-shadow: 0 4px 15px rgba(109, 40, 217, 0.4);
+.btn-action.danger {
+    background-color: #ef4444;
+    color: white;
 }
 
-#btn-export:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 22px rgba(124, 58, 237, 0.6);
-}
-
-#btn-clear {
-    background-color: #334155;
-    color: #f8fafc;
-}
-
-#btn-clear:hover {
-    background-color: #f87171;
-    color: #ffffff;
-}
-
-.btn-back {
-    display: inline-block;
-    padding: 10px 16px;
-    color: #9ca3af;
-    text-decoration: none;
-    font-size: 0.85rem;
-    transition: color 0.2s;
-}
-
-.btn-back:hover {
-    color: #c084fc;
+.btn-action.success {
+    background-color: #22c55e;
+    color: white;
 }
