@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Criador de Mapas & Cenários RPG</title>
+    <title>Criador de Cenários & Mapas</title>
     <link rel="stylesheet" href="map.css">
 </head>
 <body>
     <div class="app-container">
         <header class="header">
+            <a href="../index.html" class="btn-back">⬅️ Voltar ao Menu</a>
             <h1>🗺️ Criador de Cenários & Mapas</h1>
             <p>Selecione os terrenos, pinte o grid e monte o mapa perfeito para o seu RPG.</p>
         </header>
@@ -24,24 +25,20 @@
                 <button class="tile-btn" data-type="wall" style="--tile-color: #334155;">🧱 Parede / Masmorra</button>
                 <button class="tile-btn" data-type="tree" style="--tile-color: #15803d;">🌲 Floresta</button>
                 <button class="tile-btn" data-type="danger" style="--tile-color: #ef4444;">💀 Perigo / Chefe</button>
-                <button class="tile-btn" data-type="erase" style="--tile-color: #0f172a;">🧹 Borracha</button>
                 <button class="tile-btn" data-type="house" style="--tile-color: #ea580c;">🏠 Casa (2x2)</button>
+                <button class="tile-btn" data-type="erase" style="--tile-color: #0f172a;">🧹 Borracha</button>
             </div>
         </div>
 
-        <!-- Área de Desenho do Mapa -->
-        <div class="canvas-wrapper">
-           <canvas id="mapCanvas" width="480" height="960"></canvas>
+        <!-- Área do Mapa (Canvas 12x24) -->
+        <div class="canvas-container">
+            <canvas id="mapCanvas" width="480" height="960"></canvas>
         </div>
 
-        <!-- Botões de Ação -->
-        <div class="action-buttons">
-            <button id="btn-export" onclick="exportMap()">📸 Baixar Imagem do Mapa (PNG)</button>
-            <button id="btn-clear" onclick="clearMap()">🗑️ Limpar Tudo</button>
-        </div>
-
-        <div class="footer-nav">
-          <a href="../index.html" class="btn-back">⬅️ Voltar ao Menu Principal</a>
+        <!-- Ações do Mapa -->
+        <div class="actions">
+            <button onclick="clearMap()" class="btn-action danger">🗑️ Limpar Mapa</button>
+            <button onclick="exportMap()" class="btn-action success">📸 Exportar PNG</button>
         </div>
     </div>
 
