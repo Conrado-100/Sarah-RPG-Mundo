@@ -1,1 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criador de Mapas & Cenários RPG</title>
+    <link rel="stylesheet" href="map.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <h1>🗺️ Criador de Cenários & Mapas</h1>
+            <p>Selecione os terrenos, pinte o grid e monte o mapa perfeito para o seu RPG.</p>
+        </header>
 
+        <!-- Barra de Ferramentas / Paleta de Terrenos -->
+        <div class="palette-container">
+            <span class="palette-title">🎨 Paleta de Terrenos:</span>
+            <div class="palette-buttons">
+                <button class="tile-btn active" data-type="grass" style="--tile-color: #22c55e;">🌱 Grama</button>
+                <button class="tile-btn" data-type="dirt" style="--tile-color: #78350f;">🪵 Terra / Caminho</button>
+                <button class="tile-btn" data-type="water" style="--tile-color: #0284c7;">🌊 Água / Rio</button>
+                <button class="tile-btn" data-type="stone" style="--tile-color: #64748b;">🪨 Pedra / Montanha</button>
+                <button class="tile-btn" data-type="wall" style="--tile-color: #334155;">🧱 Parede / Masmorra</button>
+                <button class="tile-btn" data-type="tree" style="--tile-color: #15803d;">🌲 Floresta</button>
+                <button class="tile-btn" data-type="danger" style="--tile-color: #ef4444;">💀 Perigo / Chefe</button>
+                <button class="tile-btn" data-type="erase" style="--tile-color: #0f172a;">🧹 Borracha</button>
+            </div>
+        </div>
+
+        <!-- Área de Desenho do Mapa -->
+        <div class="canvas-wrapper">
+            <canvas id="mapCanvas" width="500" height="500"></canvas>
+        </div>
+
+        <!-- Botões de Ação -->
+        <div class="action-buttons">
+            <button id="btn-export" onclick="exportMap()">📸 Baixar Imagem do Mapa (PNG)</button>
+            <button id="btn-clear" onclick="clearMap()">🗑️ Limpar Tudo</button>
+        </div>
+
+        <div class="footer-nav">
+            <a href="../logica/index.html" class="btn-back">⬅️ Voltar ao Gerador de Nomes</a>
+        </div>
+    </div>
+
+    <script src="map.js"></script>
+</body>
+</html>
