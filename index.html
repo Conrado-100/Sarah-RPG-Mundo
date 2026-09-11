@@ -3,8 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forja de Idiomas - RPG</title>
+    <title>Painel do Mestre - RPG</title>
     <style>
+        :root {
+            --bg-fundo: #0b0f19;
+            --bg-card: #111827;
+            --bg-hover: #1e293b;
+            --border-purple: #7c3aed;
+            --text-principal: #f8fafc;
+            --text-secundario: #9ca3af;
+            --gradient-btn: linear-gradient(135deg, #6d28d9 0%, #1e1b4b 100%);
+            --sombra-roxo: 0 4px 20px rgba(109, 40, 217, 0.4);
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -13,72 +24,123 @@
         }
 
         body {
-            background-color: #0b0f19;
-            color: #f8fafc;
+            background-color: var(--bg-fundo);
+            color: var(--text-principal);
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             padding: 20px;
+        }
+
+        .hub-container {
+            max-width: 500px;
+            width: 100%;
+            background-color: var(--bg-card);
+            padding: 32px 24px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            border: 1px solid #1e293b;
             text-align: center;
         }
 
-        .card {
-            max-width: 450px;
-            width: 100%;
-            background: #111827;
-            padding: 40px 30px;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
-            border: 1px solid #1e293b;
+        header {
+            margin-bottom: 28px;
         }
 
-        h1 {
+        header h1 {
             font-size: 2rem;
-            margin-bottom: 12px;
-            color: #f3f4f6;
-        }
-
-        p {
-            font-size: 1rem;
-            color: #9ca3af;
-            margin-bottom: 32px;
-            line-height: 1.5;
-        }
-
-        .btn-gerador {
-            display: inline-block;
-            width: 100%;
-            padding: 16px 24px;
-            font-size: 1.1rem;
-            font-weight: 700;
             color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            font-size: 0.95rem;
+            color: var(--text-secundario);
+        }
+
+        .menu-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .card-link {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 18px 20px;
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 14px;
             text-decoration: none;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #6d28d9 0%, #1e1b4b 100%);
-            border: 1px solid #7c3aed;
-            box-shadow: 0 4px 15px rgba(109, 40, 217, 0.4);
+            color: var(--text-principal);
             transition: all 0.3s ease;
+            text-align: left;
         }
 
-        .btn-gerador:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 22px rgba(124, 58, 237, 0.6);
-            background: linear-gradient(135deg, #7c3aed 0%, #0f172a 100%);
+        .card-link:hover {
+            border-color: var(--border-purple);
+            background: var(--bg-hover);
+            box-shadow: var(--sombra-roxo);
+            transform: translateY(-3px);
         }
 
-        .btn-gerador:active {
-            transform: translateY(0);
+        .card-icon {
+            font-size: 2.2rem;
+            line-height: 1;
+        }
+
+        .card-info h2 {
+            font-size: 1.15rem;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .card-info p {
+            font-size: 0.85rem;
+            color: var(--text-secundario);
+        }
+
+        footer {
+            margin-top: 28px;
+            font-size: 0.8rem;
+            color: var(--text-secundario);
         }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>🎲 Forja de Idiomas</h1>
-        <p>Gerador procedural de nomes e línguas fictícias para campanhas de RPG de mesa.</p>
-        <a href="https://conrado-100.github.io/Sarah-RPG-Mundo/logica/index.html" class="btn-gerador">
-            Entrar no Gerador
-        </a>
+
+    <div class="hub-container">
+        <header>
+            <h1>⚔️ Central de RPG</h1>
+            <p>Escolha a ferramenta que deseja utilizar no seu mundo:</p>
+        </header>
+
+        <main class="menu-grid">
+            <!-- Botão 1: Gerador de Nomes & D20 -->
+            <a href="logica/index.html" class="card-link">
+                <div class="card-icon">🎲</div>
+                <div class="card-info">
+                    <h2>Forja de Idiomas & D20</h2>
+                    <p>Gere nomes imersivos e role dados com frases de sorte.</p>
+                </div>
+            </a>
+
+            <!-- Botão 2: Criador de Mapas e Cenários -->
+            <a href="mapa_custom/index.html" class="card-link">
+                <div class="card-icon">🗺️</div>
+                <div class="card-info">
+                    <h2>Criador de Cenários</h2>
+                    <p>Monte mapas interativos com terrenos e exporte em imagem.</p>
+                </div>
+            </a>
+        </main>
+
+        <footer>
+            <p>Desenvolvido para a melhor experiência de RPG ✨</p>
+        </footer>
     </div>
+
 </body>
 </html>
