@@ -1,17 +1,18 @@
 const GRID_SIZE = 12;
 const canvas = document.getElementById('mapCanvas');
 const ctx = canvas.getContext('2d');
-const CELL_SIZE = canvas.width / GRID_SIZE; // 48px por célula
+const CELL_SIZE = canvas.width / GRID_SIZE; // 48px
 
-// Estado do Mundo e Setores
 let currentSectorX = 0;
 let currentSectorY = 0;
 let worldSectors = {}; 
 
-// Sistema de Som Synthesizer
+// Cache de imagens carregadas via JSON
+const imageCache = {};
+
+// Som
 let soundEnabled = true;
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
 function playBeep(freq = 400) {
     if (!soundEnabled) return;
     try {
@@ -28,73 +29,6 @@ function playBeep(freq = 400) {
     } catch(e){}
 }
 
-// -------------------------------------------------------------
-// GERADOR PROCEDURAL DE TEXTURAS RETRO 16-BIT (CANVAS CACHE)
-// -------------------------------------------------------------
-const textureCache = {};
-
-function createPixelTexture(type, id) {
-    const key = `${type}_${id}`;
-    if (textureCache[key]) return textureCache[key];
-
-    const tCanvas = document.createElement('canvas');
-    tCanvas.width = 16;
-    tCanvas.height = 16;
-    const tCtx = tCanvas.getContext('2d');
-
-    if (id === 'grama') {
-        tCtx.fillStyle = '#1e863d'; tCtx.fillRect(0, 0, 16, 16);
-        tCtx.fillStyle = '#135c28';
-        tCtx.fillRect(2, 3, 2, 4); tCtx.fillRect(10, 8, 2, 4); tCtx.fillRect(6, 12, 2, 3);
-        tCtx.fillStyle = '#34d399';
-        tCtx.fillRect(3, 2, 1, 2); tCtx.fillRect(11, 7, 1, 2);
-    } else if (id === 'terra') {
-        tCtx.fillStyle = '#78350f'; tCtx.fillRect(0, 0, 16, 16);
-        tCtx.fillStyle = '#542307';
-        tCtx.fillRect(1, 2, 3, 2); tCtx.fillRect(8, 10, 4, 2); tCtx.fillRect(12, 4, 2, 2);
-        tCtx.fillStyle = '#92400e';
-        tCtx.fillRect(5, 6, 2, 2); tCtx.fillRect(10, 2, 2, 2);
-    } else if (id === 'agua') {
-        tCtx.fillStyle = '#0284c7'; tCtx.fillRect(0, 0, 16, 16);
-        tCtx.fillStyle = '#38bdf8';
-        tCtx.fillRect(2, 4, 4, 1); tCtx.fillRect(10, 11, 5, 1); tCtx.fillRect(7, 2, 3, 1);
-        tCtx.fillStyle = '#0369a1';
-        tCtx.fillRect(0, 8, 6, 1); tCtx.fillRect(8, 14, 6, 1);
-    } else if (id === 'pedra') {
-        tCtx.fillStyle = '#475569'; tCtx.fillRect(0, 0, 16, 16);
-        tCtx.fillStyle = '#334155';
-        tCtx.fillRect(0, 7, 16, 1); tCtx.fillRect(7, 0, 1, 7); tCtx.fillRect(11, 8, 1, 8);
-        tCtx.fillStyle = '#64748b';
-        tCtx.fillRect(1, 1, 5, 1); tCtx.fillRect(8, 9, 3, 1);
-    } else if (id === 'areia') {
-        tCtx.fillStyle = '#eab308'; tCtx.fillRect(0, 0, 16, 16);
-        tCtx.fillStyle = '#ca8a04';
-        tCtx.fillRect(3, 4, 2, 2); tCtx.fillRect(11, 9, 3, 1); tCtx.fillRect(6, 13, 2, 2);
-    } else if (id === 'gelo') {
-        tCtx.fillStyle = '#38bdf8'; tCtx.fillRect(0, 0, 16, 16);
-        tCtx.fillStyle = '#e0f2fe';
-        tCtx.fillRect(2, 2, 4, 4); tCtx.fillRect(10, 10, 3, 3);
-        tCtx.fillStyle = '#0284c7';
-        tCtx.fillRect(0, 15, 16, 1); tCtx.fillRect(15, 0, 1, 16);
-    } else if (id === 'taiga') {
-        tCtx.fillStyle = '#14532d'; tCtx.fillRect(0, 0, 16, 16);
-        tCtx.fillStyle = '#052e16';
-        tCtx.fillRect(1, 1, 4, 4); tCtx.fillRect(9, 8, 5, 4);
-    } else if (id === 'rocha') {
-        tCtx.fillStyle = '#1e293b'; tCtx.fillRect(0, 0, 16, 16);
-        tCtx.fillStyle = '#0f172a';
-        tCtx.fillRect(2, 2, 12, 12);
-        tCtx.fillStyle = '#334155';
-        tCtx.fillRect(4, 4, 4, 4);
-    }
-
-    textureCache[key] = tCanvas;
-    return tCanvas;
-}
-
-// -------------------------------------------------------------
-// ESTRUTURA DO MUNDO & SETORES
-// -------------------------------------------------------------
 let selectedElement = { id: 'grama', type: 'terrain', w: 1, h: 1, label: 'Grama' };
 
 function getSectorKey(x, y) { return `${x},${y}`; }
@@ -110,25 +44,30 @@ function getOrCreateSector(x, y) {
     return worldSectors[key];
 }
 
-// Renderização Principal do Mapa
+// -------------------------------------------------------------
+// MOTOR DE RENDERIZAÇÃO RETRO FOTORREALISTA IGUAL À PRINT
+// -------------------------------------------------------------
+
 function renderMap() {
     const matrix = getOrCreateSector(currentSectorX, currentSectorY);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Passagem 1: Renderizar Terrenos
+    // Passagem 1: Renderização dos Terrenos
     for (let r = 0; r < GRID_SIZE; r++) {
         for (let c = 0; c < GRID_SIZE; c++) {
-            const cell = matrix[r][c];
-            const tImg = createPixelTexture('terrain', cell.terrain || 'grama');
-            ctx.drawImage(tImg, c * CELL_SIZE, r * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+            const x = c * CELL_SIZE;
+            const y = r * CELL_SIZE;
+            const terrain = matrix[r][c].terrain || 'grama';
 
-            // Grade Suave
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-            ctx.strokeRect(c * CELL_SIZE, r * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+            drawTerrainTile(terrain, x, y);
+
+            // Linha da grade sutil
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
+            ctx.strokeRect(x, y, CELL_SIZE, CELL_SIZE);
         }
     }
 
-    // Passagem 2: Renderizar Objetos, Estruturas e Unidades
+    // Passagem 2: Renderização dos Objetos, Estruturas e Unidades
     for (let r = 0; r < GRID_SIZE; r++) {
         for (let c = 0; c < GRID_SIZE; c++) {
             const item = matrix[r][c].item;
@@ -140,13 +79,16 @@ function renderMap() {
             const h = (item.h || 1) * CELL_SIZE;
 
             if (item.customImg) {
-                // Renderizar Imagem JSON do Construction
-                const img = new Image();
-                img.src = item.customImg;
-                ctx.drawImage(img, x, y, w, h);
+                if (!imageCache[item.customImg]) {
+                    const img = new Image();
+                    img.src = item.customImg;
+                    img.onload = () => renderMap();
+                    imageCache[item.customImg] = img;
+                } else {
+                    ctx.drawImage(imageCache[item.customImg], x, y, w, h);
+                }
             } else {
-                // Desenho Procedural Retro dos Objetos Internos
-                renderDefaultObject(item.id, x, y, w, h);
+                drawObjectTile(item.id, x, y, w, h);
             }
         }
     }
@@ -154,33 +96,106 @@ function renderMap() {
     updateMinimap();
 }
 
-// Desenhar Objetos Padronizados RPG (Sombra e Cores 16-bit)
-function renderDefaultObject(id, x, y, w, h) {
-    ctx.save();
-    if (id === 'arvore' || id === 'pinheiro') {
-        ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.beginPath(); ctx.ellipse(x + w/2, y + h - 6, w/3, 6, 0, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#78350f'; ctx.fillRect(x + w/2 - 4, y + h/2, 8, h/2 - 4);
-        ctx.fillStyle = id === 'arvore' ? '#16a34a' : '#15803d';
-        ctx.beginPath(); ctx.arc(x + w/2, y + h/3, w/2.2, 0, Math.PI*2); ctx.fill();
-    } else if (id === 'casa') {
-        ctx.fillStyle = '#b45309'; ctx.fillRect(x + 4, y + h/3, w - 8, h*2/3 - 4);
-        ctx.fillStyle = '#dc2626'; ctx.beginPath(); ctx.moveTo(x, y + h/3); ctx.lineTo(x + w/2, y); ctx.lineTo(x + w, y + h/3); ctx.fill();
-        ctx.fillStyle = '#451a03'; ctx.fillRect(x + w/2 - 6, y + h - 20, 12, 16);
-    } else if (id === 'torre' || id === 'castelo') {
-        ctx.fillStyle = '#64748b'; ctx.fillRect(x + 4, y + 8, w - 8, h - 12);
-        ctx.fillStyle = '#334155'; ctx.fillRect(x, y, w, 12);
-        ctx.fillStyle = '#0284c7'; ctx.fillRect(x + w/2 - 2, y - 8, 4, 10);
-    } else if (id === 'muralha') {
-        ctx.fillStyle = '#475569'; ctx.fillRect(x, y + 4, w, h - 4);
-        ctx.fillStyle = '#64748b'; ctx.fillRect(x, y, w/3, 6); ctx.fillRect(x + w*2/3, y, w/3, 6);
-    } else if (id === 'arqueiro' || id === 'cavaleiro' || id === 'piqueiro' || id === 'besteiro') {
-        ctx.fillStyle = id === 'cavaleiro' ? '#f43f5e' : '#38bdf8';
-        ctx.beginPath(); ctx.arc(x + w/2, y + h/2, 10, 0, Math.PI*2); ctx.fill();
-        ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.stroke();
-    } else {
-        ctx.fillStyle = '#d97706'; ctx.fillRect(x + 2, y + 2, w - 4, h - 4);
+// Desenhar Terrenos
+function drawTerrainTile(type, x, y) {
+    if (type === 'grama') {
+        ctx.fillStyle = '#22c55e';
+        ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+        ctx.fillStyle = '#15803d';
+        ctx.fillRect(x + 12, y + 10, 4, 8);
+        ctx.fillRect(x + 28, y + 26, 4, 8);
+    } else if (type === 'terra') {
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(x + 8, y + 8, 10, 10);
+        ctx.fillRect(x + 26, y + 26, 12, 12);
+    } else if (type === 'agua') {
+        ctx.fillStyle = '#0284c7';
+        ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillRect(x + 6, y + 14, 18, 4);
+        ctx.fillRect(x + 22, y + 30, 20, 4);
+    } else if (type === 'pedra') {
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(x + 2, y + 22, 44, 2);
+        ctx.fillRect(x + 22, y + 2, 2, 20);
+    } else if (type === 'areia') {
+        ctx.fillStyle = '#eab308';
+        ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+        ctx.fillStyle = '#ca8a04';
+        ctx.fillRect(x + 10, y + 12, 4, 4);
+        ctx.fillRect(x + 30, y + 28, 4, 4);
+    } else if (type === 'gelo') {
+        ctx.fillStyle = '#e0f2fe';
+        ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+        ctx.fillStyle = '#bae6fd';
+        ctx.fillRect(x + 4, y + 4, 16, 16);
+    } else if (type === 'taiga') {
+        ctx.fillStyle = '#14532d';
+        ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+        ctx.fillStyle = '#052e16';
+        ctx.fillRect(x + 10, y + 10, 6, 6);
+    } else if (type === 'rocha') {
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(x + 6, y + 6, 36, 36);
     }
-    ctx.restore();
+}
+
+// Desenhar Objetos e Estruturas
+function drawObjectTile(id, x, y, w, h) {
+    if (id === 'arvore') {
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(x + 18, y + 48, 12, 40);
+        ctx.fillStyle = '#15803d';
+        ctx.fillRect(x + 6, y + 6, 36, 48);
+        ctx.fillStyle = '#166534';
+        ctx.fillRect(x + 10, y + 10, 12, 12);
+    } else if (id === 'pinheiro') {
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(x + 20, y + 70, 8, 20);
+        ctx.fillStyle = '#14532d';
+        ctx.beginPath();
+        ctx.moveTo(x + 4, y + 70); ctx.lineTo(x + 24, y + 30); ctx.lineTo(x + 44, y + 70); ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(x + 8, y + 40); ctx.lineTo(x + 24, y + 6); ctx.lineTo(x + 40, y + 40); ctx.fill();
+    } else if (id === 'casa') {
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.moveTo(x + 4, y + 44); ctx.lineTo(x + w/2, y + 8); ctx.lineTo(x + w - 4, y + 44); ctx.fill();
+        ctx.fillStyle = '#fde047';
+        ctx.fillRect(x + 8, y + 44, w - 16, h - 48);
+        ctx.fillStyle = '#0284c7'; ctx.fillRect(x + 18, y + 56, 18, 18); // Janela
+        ctx.fillStyle = '#78350f'; ctx.fillRect(x + w - 36, y + 56, 18, 32); // Porta
+    } else if (id === 'muralha') {
+        ctx.fillStyle = '#64748b'; ctx.fillRect(x, y, w, h);
+        ctx.fillStyle = '#334155'; ctx.fillRect(x, y, 12, 10); ctx.fillRect(x + 24, y, 12, 10);
+        ctx.strokeStyle = '#1e293b'; ctx.strokeRect(x, y, w, h);
+    } else if (id === 'torre') {
+        ctx.fillStyle = '#64748b'; ctx.fillRect(x + 8, y + 20, w - 16, h - 20);
+        ctx.fillStyle = '#334155'; ctx.fillRect(x + 4, y, w - 8, 20);
+        ctx.fillStyle = '#0f172a'; ctx.fillRect(x + w/2 - 6, y + 40, 12, 18);
+    } else if (id === 'portao') {
+        ctx.fillStyle = '#475569'; ctx.fillRect(x, y, w, h);
+        ctx.fillStyle = '#1e293b'; ctx.fillRect(x + 16, y + 20, w - 32, h - 20);
+        ctx.fillStyle = '#78350f'; ctx.fillRect(x + 20, y + 24, w - 40, h - 24);
+    } else if (id === 'castelo') {
+        ctx.fillStyle = '#475569'; ctx.fillRect(x + 16, y + 16, w - 32, h - 32);
+        ctx.fillStyle = '#64748b';
+        ctx.fillRect(x, y, 48, 48); ctx.fillRect(x + w - 48, y, 48, 48);
+        ctx.fillRect(x, y + h - 48, 48, 48); ctx.fillRect(x + w - 48, y + h - 48, 48, 48);
+        ctx.fillStyle = '#ef4444'; ctx.fillRect(x + 20, y - 8, 8, 12); ctx.fillRect(x + w - 28, y - 8, 8, 12);
+        ctx.fillStyle = '#78350f'; ctx.fillRect(x + w/2 - 16, y + h - 40, 32, 40);
+    } else if (id === 'arqueiro' || id === 'cavaleiro' || id === 'piqueiro' || id === 'besteiro') {
+        const colors = { arqueiro: '#38bdf8', cavaleiro: '#ef4444', piqueiro: '#a855f7', besteiro: '#f97316' };
+        ctx.fillStyle = colors[id] || '#38bdf8';
+        ctx.beginPath(); ctx.arc(x + w/2, y + h/2, 14, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.stroke();
+    }
 }
 
 // Minimapa 5x5
@@ -206,7 +221,7 @@ function updateMinimap() {
     }
 }
 
-// Pintura no Canvas
+// Eventos do Mouse / Pintura
 let isMouseDown = false;
 canvas.onmousedown = (e) => { isMouseDown = true; paint(e); };
 canvas.onmousemove = (e) => { if (isMouseDown) paint(e); };
@@ -238,7 +253,7 @@ function paint(e) {
     renderMap();
 }
 
-// Seleção de Botões da Paleta
+// Seleção na Paleta
 document.querySelectorAll('.palette-btn').forEach(btn => {
     btn.onclick = () => {
         document.querySelectorAll('.palette-btn').forEach(b => b.classList.remove('active'));
@@ -257,7 +272,7 @@ document.querySelectorAll('.palette-btn').forEach(btn => {
     };
 });
 
-// Som
+// Som Toggle
 document.getElementById('btnSoundToggle').onclick = () => {
     soundEnabled = !soundEnabled;
     document.getElementById('soundLabel').innerText = soundEnabled ? 'LIGADO' : 'DESLIGADO';
@@ -283,7 +298,7 @@ function updateSectorUI() {
     renderMap();
 }
 
-// Botões de Limpeza
+// Limpeza
 document.getElementById('btnClearSector').onclick = () => {
     delete worldSectors[getSectorKey(currentSectorX, currentSectorY)];
     renderMap();
@@ -315,7 +330,7 @@ jsonInput.onchange = (e) => {
             if (data.pixels) {
                 importStructureFromJSON(data);
             } else {
-                alert("Arquivo JSON inválido. Certifique-se de que exportou pelo Construction.");
+                alert("Arquivo JSON inválido.");
             }
         } catch(err) {
             alert("Erro ao ler o arquivo JSON.");
@@ -328,7 +343,6 @@ function importStructureFromJSON(data) {
     const size = data.gridSize || 16;
     const pixels = data.pixels;
 
-    // Converte a matriz de cores em uma Imagem PNG base64
     const tempCanvas = document.createElement('canvas');
     tempCanvas.width = size;
     tempCanvas.height = size;
@@ -346,11 +360,10 @@ function importStructureFromJSON(data) {
     const imgUrl = tempCanvas.toDataURL();
     const uniqueId = 'custom_' + Date.now();
 
-    // Cria o botão da estrutura importada na barra de edifícios
     const container = document.getElementById('structuresContainer');
     const newBtn = document.createElement('button');
     newBtn.className = 'palette-btn col-span-2 border-amber-500/50 text-amber-300 active';
-    newBtn.innerHTML = `<img src="${imgUrl}" class="w-4 h-4 rounded border border-slate-700" style="image-rendering: pixelated;"> Customizada (${size}x${size})`;
+    newBtn.innerHTML = `<img src="${imgUrl}" class="w-4 h-4 rounded" style="image-rendering: pixelated;"> Custom (${size}x${size})`;
 
     document.querySelectorAll('.palette-btn').forEach(b => b.classList.remove('active'));
 
@@ -360,7 +373,7 @@ function importStructureFromJSON(data) {
         customImg: imgUrl,
         w: 1,
         h: 1,
-        label: `Customizada (${size}x${size})`
+        label: `Custom (${size}x${size})`
     };
 
     newBtn.onclick = () => {
@@ -372,18 +385,18 @@ function importStructureFromJSON(data) {
             customImg: imgUrl,
             w: 1,
             h: 1,
-            label: `Customizada (${size}x${size})`
+            label: `Custom (${size}x${size})`
         };
-        document.getElementById('activeElementLabel').innerText = `Customizada (${size}x${size})`;
+        document.getElementById('activeElementLabel').innerText = `Custom (${size}x${size})`;
     };
 
     container.appendChild(newBtn);
-    document.getElementById('activeElementLabel').innerText = `Customizada (${size}x${size})`;
+    document.getElementById('activeElementLabel').innerText = `Custom (${size}x${size})`;
     playBeep(800);
-    alert("Estrutura importada com sucesso e adicionada à paleta!");
+    alert("Estrutura importada com sucesso!");
 }
 
-// Salvar Projeto
+// Salvar / Carregar / Exportar
 document.getElementById('btnSaveProject').onclick = () => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(worldSectors));
     const downloadAnchor = document.createElement('a');
@@ -394,7 +407,6 @@ document.getElementById('btnSaveProject').onclick = () => {
     downloadAnchor.remove();
 };
 
-// Carregar Projeto
 const fileLoadProject = document.getElementById('fileLoadProject');
 document.getElementById('btnLoadProject').onclick = () => fileLoadProject.click();
 
@@ -412,7 +424,6 @@ fileLoadProject.onchange = (e) => {
     reader.readAsText(file);
 };
 
-// Exportar Imagem PNG
 document.getElementById('btnExportPNG').onclick = () => {
     const link = document.createElement('a');
     link.download = `setor_${currentSectorX}_${currentSectorY}.png`;
@@ -420,6 +431,6 @@ document.getElementById('btnExportPNG').onclick = () => {
     link.click();
 };
 
-// Inicialização
+// Inicializar
 getOrCreateSector(0, 0);
 renderMap();
