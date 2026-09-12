@@ -337,7 +337,23 @@ document.getElementById('btnExportPNG').onclick = () => {
     link.href = tempCanvas.toDataURL('image/png');
     link.click();
 };
+// Exportar Estrutura em formato JSON
+document.getElementById('btnExportJSON').onclick = () => {
+    const jsonPayload = {
+        type: "rpg_custom_structure",
+        version: "1.0",
+        gridSize: gridSize,
+        pixels: pixelMatrix
+    };
 
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(jsonPayload, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `estrutura_custom_${gridSize}x${gridSize}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+};
 // Inicialização
 renderPalette('stone');
 render();
