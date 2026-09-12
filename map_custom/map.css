@@ -1,10 +1,57 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
 
-body { font-family: 'Inter', sans-serif; }
+body { 
+    font-family: 'Inter', sans-serif; 
+}
 
 canvas {
     image-rendering: pixelated;
     image-rendering: crisp-edges;
+}
+
+.palette-btn {
+    background-color: #0f172a;
+    border: 1px solid #334155;
+    color: #cbd5e1;
+    font-size: 0.75rem;
+    padding: 0.4rem 0.6rem;
+    border-radius: 0.5rem;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    width: 100%;
+}
+
+.palette-btn:hover { 
+    background-color: #1e293b; 
+    border-color: #64748b; 
+    color: #f8fafc; 
+}
+
+.palette-btn.active {
+    background-color: #064e3b;
+    border-color: #10b981;
+    color: #34d399;
+    font-weight: 600;
+}
+
+.nav-btn {
+    background-color: #0f172a;
+    border: 1px solid #334155;
+    color: #38bdf8;
+    font-weight: bold;
+    font-size: 0.75rem;
+    border-radius: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+}
+
+.nav-btn:hover { 
+    background-color: #1e293b; 
+    border-color: #38bdf8; 
 }
 
 .tile-option {
