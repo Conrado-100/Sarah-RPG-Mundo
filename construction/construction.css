@@ -1,40 +1,116 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
 
-body { font-family: 'Inter', sans-serif; }
+body {
+    font-family: 'Inter', sans-serif;
+}
 
+/* Renderização nítida de Pixel Art */
 canvas {
     image-rendering: pixelated;
     image-rendering: crisp-edges;
 }
 
+/* Botões da Barra Superior */
+.btn-primary {
+    background-color: #059669;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.4rem 0.8rem;
+    border-radius: 0.375rem;
+    transition: all 0.15s ease;
+}
+.btn-primary:hover { background-color: #10b981; }
+
+.btn-secondary {
+    background-color: #1e293b;
+    color: #cbd5e1;
+    border: 1px solid #334155;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.4rem 0.8rem;
+    border-radius: 0.375rem;
+    transition: all 0.15s ease;
+}
+.btn-secondary:hover { background-color: #334155; color: #f8fafc; }
+
+.btn-danger {
+    background-color: #991b1b;
+    color: #fecaca;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.4rem 0.8rem;
+    border-radius: 0.375rem;
+    transition: all 0.15s ease;
+}
+.btn-danger:hover { background-color: #dc2626; color: white; }
+
+/* Botões de Ferramentas */
 .tool-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.4rem;
-    padding: 0.5rem;
+    height: 2.25rem;
     background-color: #0f172a;
     border: 1px solid #334155;
     border-radius: 0.375rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #cbd5e1;
+    color: #94a3b8;
+    font-size: 0.875rem;
     transition: all 0.15s ease;
 }
-
-.tool-btn:hover { background-color: #1e293b; color: #f8fafc; }
+.tool-btn:hover { background-color: #1e293b; color: #f1f5f9; }
 .tool-btn.active {
     background-color: #78350f;
     border-color: #f59e0b;
     color: #fbbf24;
 }
 
+/* Botões de Presets de Edifício */
+.preset-btn {
+    background-color: #0f172a;
+    border: 1px solid #334155;
+    padding: 0.4rem 0.5rem;
+    border-radius: 0.375rem;
+    color: #cbd5e1;
+    text-align: left;
+    transition: all 0.15s ease;
+}
+.preset-btn:hover {
+    background-color: #1e293b;
+    border-color: #f59e0b;
+    color: #f59e0b;
+}
+
+/* Abas de Materiais */
+.mat-tab {
+    flex: 1;
+    padding: 0.25rem 0;
+    text-align: center;
+    background-color: #0f172a;
+    border: 1px solid #1e293b;
+    color: #64748b;
+    border-radius: 0.25rem;
+    transition: all 0.15s;
+}
+.mat-tab:hover { color: #cbd5e1; }
+.mat-tab.active {
+    background-color: #1e293b;
+    color: #f59e0b;
+    border-color: #f59e0b;
+    font-weight: bold;
+}
+
+/* Quadrados de Cor */
 .color-swatch {
     width: 100%;
     aspect-ratio: 1;
     border-radius: 0.25rem;
     cursor: pointer;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: transform 0.1s ease;
+    transition: transform 0.1s ease, border-color 0.1s ease;
 }
-.color-swatch:hover { transform: scale(1.15); z-index: 10; }
+.color-swatch:hover {
+    transform: scale(1.15);
+    border-color: #ffffff;
+    z-index: 10;
+}
