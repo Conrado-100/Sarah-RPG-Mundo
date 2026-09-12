@@ -7,11 +7,7 @@ let currentSectorX = 0;
 let currentSectorY = 0;
 let worldSectors = {}; 
 
-// Cache de imagens carregadas via JSON
 const imageCache = {};
-
-// Variável de quadros para a animação da água
-let animFrame = 0;
 
 // Som
 let soundEnabled = true;
@@ -48,14 +44,14 @@ function getOrCreateSector(x, y) {
 }
 
 // -------------------------------------------------------------
-// MOTOR DE RENDERIZAÇÃO RETRO FOTORREALISTA + ANIMAÇÕES
+// MOTOR DE RENDERIZAÇÃO RETRO FOTORREALISTA + ANIMAÇÃO DA ÁGUA
 // -------------------------------------------------------------
 
 function renderMap() {
     const matrix = getOrCreateSector(currentSectorX, currentSectorY);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Passagem 1: Renderização dos Terrenos
+    // Passo 1: Renderizar Terrenos
     for (let r = 0; r < GRID_SIZE; r++) {
         for (let c = 0; c < GRID_SIZE; c++) {
             const x = c * CELL_SIZE;
@@ -64,13 +60,13 @@ function renderMap() {
 
             drawTerrainTile(terrain, x, y);
 
-            // Linha da grade sutil
+            // Grade sutil
             ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
             ctx.strokeRect(x, y, CELL_SIZE, CELL_SIZE);
         }
     }
 
-    // Passagem 2: Renderização dos Objetos, Estruturas e Unidades
+    // Passo 2: Renderizar Objetos, Vegetação e Estruturas
     for (let r = 0; r < GRID_SIZE; r++) {
         for (let c = 0; c < GRID_SIZE; c++) {
             const item = matrix[r][c].item;
@@ -99,9 +95,8 @@ function renderMap() {
     updateMinimap();
 }
 
-// Loop de animação contínua (30-60 FPS)
+// Loop contínuo de animação (3 quadros para água trocando a cada 250ms)
 function gameLoop() {
-    animFrame++;
     renderMap();
     requestAnimationFrame(gameLoop);
 }
@@ -111,9 +106,13 @@ function drawTerrainTile(type, x, y) {
     if (type === 'grama') {
         ctx.fillStyle = '#22c55e';
         ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+        // Tufo de grama 1
         ctx.fillStyle = '#15803d';
-        ctx.fillRect(x + 12, y + 10, 4, 8);
-        ctx.fillRect(x + 28, y + 26, 4, 8);
+        ctx.fillRect(x + 10, y + 12, 3, 6);
+        ctx.fillRect(x + 13, y + 10, 3, 8);
+        // Tufo de grama 2
+        ctx.fillRect(x + 30, y + 26, 3, 8);
+        ctx.fillRect(x + 33, y + 28, 3, 6);
     } else if (type === 'terra') {
         ctx.fillStyle = '#78350f';
         ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
@@ -121,19 +120,29 @@ function drawTerrainTile(type, x, y) {
         ctx.fillRect(x + 8, y + 8, 10, 10);
         ctx.fillRect(x + 26, y + 26, 12, 12);
     } else if (type === 'agua') {
-        // Base de Água
         ctx.fillStyle = '#0284c7';
         ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
 
-        // Movimento animado das ondas da água
+        // Animação das Ondas em Tempo Real
+        const waterFrame = Math.floor(Date.now() / 250) % 3;
         ctx.fillStyle = '#38bdf8';
-        const waveOffset1 = Math.floor((animFrame / 10) % 16);
-        const waveOffset2 = Math.floor((animFrame / 14) % 16);
 
-        ctx.fillRect(x + ((waveOffset1 * 2) % 28), y + 10, 16, 4);
-        ctx.fillRect(x + ((28 - waveOffset2 * 2 + 28) % 28), y + 28, 18, 4);
-        ctx.fillStyle = '#e0f2fe';
-        ctx.fillRect(x + ((waveOffset1 * 2 + 6) % 28), y + 10, 4, 4);
+        if (waterFrame === 0) {
+            ctx.fillRect(x + 4, y + 12, 18, 4);
+            ctx.fillRect(x + 22, y + 30, 20, 4);
+            ctx.fillStyle = '#e0f2fe';
+            ctx.fillRect(x + 18, y + 12, 4, 4);
+        } else if (waterFrame === 1) {
+            ctx.fillRect(x + 10, y + 12, 18, 4);
+            ctx.fillRect(x + 14, y + 30, 20, 4);
+            ctx.fillStyle = '#e0f2fe';
+            ctx.fillRect(x + 24, y + 12, 4, 4);
+        } else {
+            ctx.fillRect(x + 16, y + 12, 18, 4);
+            ctx.fillRect(x + 6, y + 30, 20, 4);
+            ctx.fillStyle = '#e0f2fe';
+            ctx.fillRect(x + 30, y + 12, 4, 4);
+        }
     } else if (type === 'pedra') {
         ctx.fillStyle = '#475569';
         ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
@@ -164,75 +173,81 @@ function drawTerrainTile(type, x, y) {
     }
 }
 
-// Desenhar Objetos e Estruturas
+// Desenhar Objetos, Vegetação e Estruturas
 function drawObjectTile(id, x, y, w, h) {
     if (id === 'arvore') {
+        // Tronco (1x2)
         ctx.fillStyle = '#78350f';
-        ctx.fillRect(x + 18, y + 48, 12, 40);
+        ctx.fillRect(x + 18, y + 48, 12, 42);
+        // Copa Verde
         ctx.fillStyle = '#15803d';
         ctx.fillRect(x + 6, y + 6, 36, 48);
-        ctx.fillStyle = '#166534';
+        ctx.fillStyle = '#22c55e';
         ctx.fillRect(x + 10, y + 10, 12, 12);
     } else if (id === 'pinheiro') {
+        // Tronco (1x2)
         ctx.fillStyle = '#78350f';
-        ctx.fillRect(x + 20, y + 70, 8, 20);
+        ctx.fillRect(x + 20, y + 70, 8, 22);
+        // Triângulos de Pinheiro
         ctx.fillStyle = '#14532d';
         ctx.beginPath();
         ctx.moveTo(x + 4, y + 70); ctx.lineTo(x + 24, y + 30); ctx.lineTo(x + 44, y + 70); ctx.fill();
         ctx.beginPath();
         ctx.moveTo(x + 8, y + 40); ctx.lineTo(x + 24, y + 6); ctx.lineTo(x + 40, y + 40); ctx.fill();
     } else if (id === 'savana') {
-        // Savana - Grama seca e arbustos áridos (1x2)
-        ctx.fillStyle = '#b45309';
-        ctx.fillRect(x + 14, y + 75, 20, 15);
+        // Savana / Palha Dourada Árida (1x2)
         ctx.fillStyle = '#eab308';
-        // Folhas altas em leque
-        ctx.beginPath(); ctx.moveTo(x + 10, y + 85); ctx.lineTo(x + 4, y + 25); ctx.lineTo(x + 18, y + 85); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(x + 18, y + 85); ctx.lineTo(x + 24, y + 12); ctx.lineTo(x + 30, y + 85); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(x + 28, y + 85); ctx.lineTo(x + 42, y + 30); ctx.lineTo(x + 38, y + 85); ctx.fill();
+        ctx.fillRect(x + 4, y + 12, 40, 78);
+        ctx.fillStyle = '#d97706';
+        ctx.fillRect(x + 8, y + 16, 6, 70);
+        ctx.fillRect(x + 20, y + 12, 6, 74);
+        ctx.fillRect(x + 32, y + 20, 6, 66);
         ctx.fillStyle = '#fef08a';
-        ctx.fillRect(x + 22, y + 20, 4, 35);
+        ctx.fillRect(x + 10, y + 12, 2, 24);
+        ctx.fillRect(x + 22, y + 8, 2, 30);
     } else if (id === 'cacto') {
-        // Cacto Saguaro (1x2)
+        // Cacto Saguaro Verde (1x2)
         const cx = x + 18;
-        const cy = y + 10;
-        
         ctx.fillStyle = '#15803d';
-        // Tronco central
-        ctx.fillRect(cx, cy, 12, 78);
-        // Braço esquerdo
-        ctx.fillRect(cx - 12, cy + 32, 12, 8);
-        ctx.fillRect(cx - 12, cy + 18, 8, 20);
-        // Braço direito
-        ctx.fillRect(cx + 12, cy + 44, 12, 8);
-        ctx.fillRect(cx + 16, cy + 26, 8, 24);
-
-        // Brilhos e texturas
+        // Tronco Principal
+        ctx.fillRect(cx, y + 10, 12, 80);
+        // Braço Esquerdo
+        ctx.fillRect(cx - 12, y + 36, 12, 8);
+        ctx.fillRect(cx - 12, y + 20, 8, 24);
+        // Braço Direito
+        ctx.fillRect(cx + 12, y + 48, 12, 8);
+        ctx.fillRect(cx + 16, y + 28, 8, 28);
+        // Detalhes / Brilho
         ctx.fillStyle = '#4ade80';
-        ctx.fillRect(cx + 2, cy + 4, 3, 72);
-        ctx.fillRect(cx - 10, cy + 20, 2, 14);
-        ctx.fillRect(cx + 18, cy + 28, 2, 18);
+        ctx.fillRect(cx + 2, y + 12, 3, 76);
+        ctx.fillRect(cx - 10, y + 22, 2, 20);
+        ctx.fillRect(cx + 18, y + 30, 2, 24);
     } else if (id === 'casa') {
-        ctx.fillStyle = '#ef4444';
+        // Casa (2x2)
+        ctx.fillStyle = '#ef4444'; // Telhado vermelho
         ctx.beginPath();
         ctx.moveTo(x + 4, y + 44); ctx.lineTo(x + w/2, y + 8); ctx.lineTo(x + w - 4, y + 44); ctx.fill();
-        ctx.fillStyle = '#fde047';
+        ctx.fillStyle = '#fde047'; // Paredes amarelas
         ctx.fillRect(x + 8, y + 44, w - 16, h - 48);
-        ctx.fillStyle = '#0284c7'; ctx.fillRect(x + 18, y + 56, 18, 18);
-        ctx.fillStyle = '#78350f'; ctx.fillRect(x + w - 36, y + 56, 18, 32);
+        ctx.fillStyle = '#0284c7'; ctx.fillRect(x + 18, y + 56, 18, 18); // Janela Azul
+        ctx.fillStyle = '#78350f'; ctx.fillRect(x + w - 36, y + 56, 18, 32); // Porta Madeira
     } else if (id === 'muralha') {
+        // Muralha de Pedra (1x1)
         ctx.fillStyle = '#64748b'; ctx.fillRect(x, y, w, h);
         ctx.fillStyle = '#334155'; ctx.fillRect(x, y, 12, 10); ctx.fillRect(x + 24, y, 12, 10);
         ctx.strokeStyle = '#1e293b'; ctx.strokeRect(x, y, w, h);
     } else if (id === 'torre') {
+        // Torre (2x3)
         ctx.fillStyle = '#64748b'; ctx.fillRect(x + 8, y + 20, w - 16, h - 20);
         ctx.fillStyle = '#334155'; ctx.fillRect(x + 4, y, w - 8, 20);
         ctx.fillStyle = '#0f172a'; ctx.fillRect(x + w/2 - 6, y + 40, 12, 18);
     } else if (id === 'portao') {
+        // Portão (2x2)
         ctx.fillStyle = '#475569'; ctx.fillRect(x, y, w, h);
         ctx.fillStyle = '#1e293b'; ctx.fillRect(x + 16, y + 20, w - 32, h - 20);
         ctx.fillStyle = '#78350f'; ctx.fillRect(x + 20, y + 24, w - 40, h - 24);
     } else if (id === 'castelo') {
+        // Castelo (4x4)
         ctx.fillStyle = '#475569'; ctx.fillRect(x + 16, y + 16, w - 32, h - 32);
         ctx.fillStyle = '#64748b';
         ctx.fillRect(x, y, 48, 48); ctx.fillRect(x + w - 48, y, 48, 48);
@@ -240,6 +255,7 @@ function drawObjectTile(id, x, y, w, h) {
         ctx.fillStyle = '#ef4444'; ctx.fillRect(x + 20, y - 8, 8, 12); ctx.fillRect(x + w - 28, y - 8, 8, 12);
         ctx.fillStyle = '#78350f'; ctx.fillRect(x + w/2 - 16, y + h - 40, 32, 40);
     } else if (id === 'arqueiro' || id === 'cavaleiro' || id === 'piqueiro' || id === 'besteiro') {
+        // Unidades Militares
         const colors = { arqueiro: '#38bdf8', cavaleiro: '#ef4444', piqueiro: '#a855f7', besteiro: '#f97316' };
         ctx.fillStyle = colors[id] || '#38bdf8';
         ctx.beginPath(); ctx.arc(x + w/2, y + h/2, 14, 0, Math.PI * 2); ctx.fill();
@@ -476,6 +492,6 @@ document.getElementById('btnExportPNG').onclick = () => {
     link.click();
 };
 
-// Inicialização e Loop Principal
+// Inicialização e Animação Principal
 getOrCreateSector(0, 0);
 gameLoop();
