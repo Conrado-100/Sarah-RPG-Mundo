@@ -1,0 +1,40 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+body { font-family: 'Inter', sans-serif; }
+
+canvas {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+.tool-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.5rem;
+    background-color: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #cbd5e1;
+    transition: all 0.15s ease;
+}
+
+.tool-btn:hover { background-color: #1e293b; color: #f8fafc; }
+.tool-btn.active {
+    background-color: #78350f;
+    border-color: #f59e0b;
+    color: #fbbf24;
+}
+
+.color-swatch {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: transform 0.1s ease;
+}
+.color-swatch:hover { transform: scale(1.15); z-index: 10; }
