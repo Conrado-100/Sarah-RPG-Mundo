@@ -26,7 +26,7 @@
             </div>
         </div>
 
-        <!-- Botões do Header -->
+        <!-- Botões de Ação -->
         <div class="flex items-center gap-2 text-xs">
             <button id="btnSoundToggle" class="px-3 py-1.5 bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded-lg hover:bg-amber-500/20 font-medium transition flex items-center gap-1.5">
                 <i class="fa-solid fa-volume-high"></i> Som: <span id="soundLabel">LIGADO</span>
@@ -74,14 +74,14 @@
                     <div>
                         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">🌱 Terrenos Básicos (1x1)</span>
                         <div class="grid grid-cols-2 gap-1.5">
-                            <button class="palette-btn active" data-id="grama" data-type="terrain" data-color="#15803d">🟢 Grama</button>
-                            <button class="palette-btn" data-id="terra" data-type="terrain" data-color="#78350f">🟤 Terra</button>
-                            <button class="palette-btn" data-id="agua" data-type="terrain" data-color="#0284c7">🔵 Água</button>
-                            <button class="palette-btn" data-id="pedra" data-type="terrain" data-color="#475569">2️⃣ Pedra</button>
-                            <button class="palette-btn" data-id="areia" data-type="terrain" data-color="#eab308">🟡 Areia</button>
-                            <button class="palette-btn" data-id="gelo" data-type="terrain" data-color="#38bdf8">⚪ Gelo</button>
-                            <button class="palette-btn" data-id="taiga" data-type="terrain" data-color="#14532d">🟢 Taiga</button>
-                            <button class="palette-btn" data-id="rocha" data-type="terrain" data-color="#334155">⚫ Rocha</button>
+                            <button class="palette-btn active" data-id="grama" data-type="terrain">🟢 Grama</button>
+                            <button class="palette-btn" data-id="terra" data-type="terrain">🟤 Terra</button>
+                            <button class="palette-btn" data-id="agua" data-type="terrain">🔵 Água</button>
+                            <button class="palette-btn" data-id="pedra" data-type="terrain">2️⃣ Pedra</button>
+                            <button class="palette-btn" data-id="areia" data-type="terrain">🟡 Areia</button>
+                            <button class="palette-btn" data-id="gelo" data-type="terrain">⚪ Gelo</button>
+                            <button class="palette-btn" data-id="taiga" data-type="terrain">🟢 Taiga</button>
+                            <button class="palette-btn" data-id="rocha" data-type="terrain">⚫ Rocha</button>
                         </div>
                         <button class="palette-btn border-rose-500/30 text-rose-400 hover:bg-rose-500/10 mt-1.5 justify-center" data-id="clear" data-type="clear">
                             🧹 Limpar Célula
@@ -92,10 +92,10 @@
                     <div>
                         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">🌲 Vegetação & Natureza (1x2)</span>
                         <div class="grid grid-cols-2 gap-1.5">
-                            <button class="palette-btn" data-id="arvore" data-type="object" data-w="1" data-h="2" data-color="#16a34a">🌲 Árvore (1x2)</button>
-                            <button class="palette-btn" data-id="pinheiro" data-type="object" data-w="1" data-h="2" data-color="#15803d">🌲 Pinheiro (1x2)</button>
-                            <button class="palette-btn" data-id="savana" data-type="object" data-w="1" data-h="2" data-color="#ca8a04">🌾 Savana (1x2)</button>
-                            <button class="palette-btn" data-id="cacto" data-type="object" data-w="1" data-h="2" data-color="#65a30d">🌵 Cacto (1x2)</button>
+                            <button class="palette-btn" data-id="arvore" data-type="object" data-w="1" data-h="2">🌲 Árvore (1x2)</button>
+                            <button class="palette-btn" data-id="pinheiro" data-type="object" data-w="1" data-h="2">🌲 Pinheiro (1x2)</button>
+                            <button class="palette-btn" data-id="savana" data-type="object" data-w="1" data-h="2">🌾 Savana (1x2)</button>
+                            <button class="palette-btn" data-id="cacto" data-type="object" data-w="1" data-h="2">🌵 Cacto (1x2)</button>
                         </div>
                     </div>
 
@@ -103,11 +103,11 @@
                     <div>
                         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">🏰 Estruturas & Edifícios</span>
                         <div id="structuresContainer" class="grid grid-cols-2 gap-1.5">
-                            <button class="palette-btn" data-id="casa" data-type="object" data-w="2" data-h="2" data-color="#b45309">🏠 Casa (2x2)</button>
-                            <button class="palette-btn" data-id="torre" data-type="object" data-w="2" data-h="3" data-color="#64748b">🏰 Torre (2x3)</button>
-                            <button class="palette-btn" data-id="portao" data-type="object" data-w="2" data-h="2" data-color="#78350f">🚪 Portão (2x2)</button>
-                            <button class="palette-btn" data-id="muralha" data-type="object" data-w="1" data-h="1" data-color="#475569">🧱 Muralha (1x1)</button>
-                            <button class="palette-btn col-span-2 border-amber-500/40 text-amber-300" data-id="castelo" data-type="object" data-w="4" data-h="4" data-color="#d97706">
+                            <button class="palette-btn" data-id="casa" data-type="object" data-w="2" data-h="2">🏠 Casa (2x2)</button>
+                            <button class="palette-btn" data-id="torre" data-type="object" data-w="2" data-h="3">🏰 Torre (2x3)</button>
+                            <button class="palette-btn" data-id="portao" data-type="object" data-w="2" data-h="2">🚪 Portão (2x2)</button>
+                            <button class="palette-btn" data-id="muralha" data-type="object" data-w="1" data-h="1">🧱 Muralha (1x1)</button>
+                            <button class="palette-btn col-span-2 border-amber-500/40 text-amber-300" data-id="castelo" data-type="object" data-w="4" data-h="4">
                                 🏰 Castelo Imponente (4x4)
                             </button>
                         </div>
@@ -117,10 +117,10 @@
                     <div>
                         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">⚔️ Unidades Militares (1x1)</span>
                         <div class="grid grid-cols-2 gap-1.5">
-                            <button class="palette-btn" data-id="arqueiro" data-type="unit" data-color="#38bdf8">🏹 Arqueiro</button>
-                            <button class="palette-btn" data-id="cavaleiro" data-type="unit" data-color="#f43f5e">🛡️ Cavaleiro</button>
-                            <button class="palette-btn" data-id="piqueiro" data-type="unit" data-color="#a855f7">🗡️ Piqueiro</button>
-                            <button class="palette-btn" data-id="besteiro" data-type="unit" data-color="#f97316">🎯 Besteiro</button>
+                            <button class="palette-btn" data-id="arqueiro" data-type="unit">🏹 Arqueiro</button>
+                            <button class="palette-btn" data-id="cavaleiro" data-type="unit">🛡️ Cavaleiro</button>
+                            <button class="palette-btn" data-id="piqueiro" data-type="unit">🗡️ Piqueiro</button>
+                            <button class="palette-btn" data-id="besteiro" data-type="unit">🎯 Besteiro</button>
                         </div>
                     </div>
 
