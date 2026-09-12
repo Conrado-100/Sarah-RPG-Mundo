@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Construction - Editor de Elementos Pixel Art 16x16</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="construction.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans select-none pb-10">
+
+    <!-- Cabeçalho -->
+    <header class="bg-slate-900 border-b border-slate-800 p-4 sticky top-0 z-30 shadow-md">
+        <div class="max-w-6xl mx-auto flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <a href="../index.html" class="px-2.5 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs border border-slate-700 transition">
+                    <i class="fa-solid fa-house"></i> Voltar
+                </a>
+                <div>
+                    <h1 class="text-lg font-bold text-amber-400 flex items-center gap-2">
+                        🏗️ Construction <span class="text-xs bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded border border-amber-500/30">Tile & Sprite Studio</span>
+                    </h1>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button id="btnUndo" class="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs border border-slate-700 transition">
+                    <i class="fa-solid fa-rotate-left"></i> Desfazer
+                </button>
+                <button id="btnExportPNG" class="px-3 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow transition">
+                    <i class="fa-solid fa-image"></i> Baixar PNG
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto w-full p-4 flex-1 flex flex-col lg:flex-row gap-6 mt-2">
+        
+        <!-- Ferramentas & Paleta -->
+        <aside class="w-full lg:w-72 flex flex-col gap-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-lg p-4 shadow-lg flex flex-col gap-4">
+                
+                <h2 class="text-sm font-bold text-slate-300 border-b border-slate-800 pb-2">🛠️ Ferramentas</h2>
+                <div class="grid grid-cols-2 gap-2">
+                    <button class="tool-btn active" data-tool="pencil"><i class="fa-solid fa-pencil"></i> Lápis</button>
+                    <button class="tool-btn" data-tool="eraser"><i class="fa-solid fa-eraser"></i> Borracha</button>
+                    <button class="tool-btn" data-tool="bucket"><i class="fa-solid fa-fill-drip"></i> Balde</button>
+                    <button id="btnClearCanvas" class="tool-btn text-rose-400"><i class="fa-solid fa-trash-can"></i> Limpar</button>
+                </div>
+
+                <h2 class="text-sm font-bold text-slate-300 border-b border-slate-800 pb-2 mt-2">🎨 Cores</h2>
+                <div class="flex items-center gap-2 mb-2">
+                    <input type="color" id="customColorPicker" value="#16a34a" class="w-8 h-8 rounded cursor-pointer border-0 bg-transparent">
+                    <span class="text-xs text-slate-400 font-mono" id="hexDisplay">#16a34a</span>
+                </div>
+                
+                <div class="grid grid-cols-5 gap-1.5" id="paletteGrid">
+                    <!-- Gerado Dinamicamente -->
+                </div>
+
+            </div>
+        </aside>
+
+        <!-- Área do Editor Canvas (16x16) -->
+        <section class="flex-1 flex flex-col items-center justify-start gap-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-lg p-6 shadow-xl flex flex-col items-center gap-4">
+                <div class="relative bg-slate-950 p-2 rounded border border-slate-800">
+                    <canvas id="spriteCanvas" width="320" height="320" class="cursor-crosshair shadow-2xl rounded"></canvas>
+                </div>
+                <div class="flex items-center gap-4 text-xs text-slate-400">
+                    <span>Grade 16x16 Pixels</span>
+                    <label class="flex items-center gap-1.5 cursor-pointer">
+                        <input type="checkbox" id="chkGrid" checked class="rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-0"> Exibir Grade
+                    </label>
+                </div>
+            </div>
+        </section>
+
+        <!-- Preview em Tempo Real -->
+        <aside class="w-full lg:w-64 flex flex-col gap-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-lg p-4 shadow-lg flex flex-col gap-4">
+                <h2 class="text-sm font-bold text-slate-300 border-b border-slate-800 pb-2">👁️ Pré-visualização</h2>
+                
+                <div class="flex flex-col items-center gap-2">
+                    <span class="text-[10px] text-slate-400">Tamanho Real (16x16)</span>
+                    <canvas id="preview1x" width="16" height="16" class="border border-slate-700 rounded bg-slate-950"></canvas>
+                </div>
+
+                <div class="flex flex-col items-center gap-2 mt-2">
+                    <span class="text-[10px] text-slate-400">Teste de Textura Repetida (3x3)</span>
+                    <canvas id="previewTile" width="96" height="96" class="border border-slate-700 rounded bg-slate-950"></canvas>
+                </div>
+            </div>
+        </aside>
+
+    </main>
+
+    <script src="construction.js"></script>
+</body>
+</html>
