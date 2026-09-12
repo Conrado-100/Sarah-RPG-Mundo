@@ -3,144 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel do Mestre - RPG</title>
-    <style>
-        :root {
-            --bg-fundo: #0b0f19;
-            --bg-card: #111827;
-            --bg-hover: #1e293b;
-            --border-purple: #7c3aed;
-            --text-principal: #f8fafc;
-            --text-secundario: #9ca3af;
-            --gradient-btn: linear-gradient(135deg, #6d28d9 0%, #1e1b4b 100%);
-            --sombra-roxo: 0 4px 20px rgba(109, 40, 217, 0.4);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-fundo);
-            color: var(--text-principal);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .hub-container {
-            max-width: 500px;
-            width: 100%;
-            background-color: var(--bg-card);
-            padding: 32px 24px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
-            border: 1px solid #1e293b;
-            text-align: center;
-        }
-
-        header {
-            margin-bottom: 28px;
-        }
-
-        header h1 {
-            font-size: 2rem;
-            color: #ffffff;
-            margin-bottom: 8px;
-        }
-
-        header p {
-            font-size: 0.95rem;
-            color: var(--text-secundario);
-        }
-
-        .menu-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .card-link {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 18px 20px;
-            background-color: #0f172a;
-            border: 1px solid #334155;
-            border-radius: 14px;
-            text-decoration: none;
-            color: var(--text-principal);
-            transition: all 0.3s ease;
-            text-align: left;
-        }
-
-        .card-link:hover {
-            border-color: var(--border-purple);
-            background: var(--bg-hover);
-            box-shadow: var(--sombra-roxo);
-            transform: translateY(-3px);
-        }
-
-        .card-icon {
-            font-size: 2.2rem;
-            line-height: 1;
-        }
-
-        .card-info h2 {
-            font-size: 1.15rem;
-            color: #ffffff;
-            margin-bottom: 4px;
-        }
-
-        .card-info p {
-            font-size: 0.85rem;
-            color: var(--text-secundario);
-        }
-
-        footer {
-            margin-top: 28px;
-            font-size: 0.8rem;
-            color: var(--text-secundario);
-        }
-    </style>
+    <title>RPG 2D Studio - Portal Principal</title>
+    <!-- Tailwind CSS & FontAwesome -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between items-center font-sans select-none p-4">
 
-    <div class="hub-container">
-        <header>
-            <h1>⚔️ Central de RPG</h1>
-            <p>Escolha a ferramenta que deseja utilizar no seu mundo:</p>
-        </header>
+    <!-- Cabeçalho -->
+    <header class="w-full max-w-4xl text-center my-8">
+        <div class="inline-flex items-center gap-3 bg-slate-900/80 border border-slate-800 px-4 py-2 rounded-full mb-4 shadow-lg backdrop-blur">
+            <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="text-xs font-mono text-slate-400">Sistema RPG 2D 16-Bit Ativo</span>
+        </div>
+        <h1 class="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-emerald-400 to-sky-400 tracking-tight">
+            Central de Criação RPG
+        </h1>
+        <p class="text-sm text-slate-400 mt-2">Escolha uma ferramenta para iniciar suas criações ortopédicas em pixel art</p>
+    </header>
 
-        <main class="menu-grid">
-            <!-- Botão 1: Gerador de Nomes & D20 -->
-            <a href="logica/index.html" class="card-link">
-                <div class="card-icon">🎲</div>
-                <div class="card-info">
-                    <h2>Forja de Idiomas & D20</h2>
-                    <p>Gere nomes imersivos e role dados com frases de sorte.</p>
+    <!-- Menu Principal (Cards de Opção) -->
+    <main class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6 my-auto">
+        
+        <!-- Opção 1: Editor de Mapas -->
+        <a href="map_custom/map.html" class="hub-card group relative bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:border-sky-500/50 transition-all duration-300 shadow-xl overflow-hidden flex flex-col justify-between">
+            <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-sky-500/10 rounded-full blur-2xl group-hover:bg-sky-500/20 transition-all"></div>
+            <div>
+                <div class="w-14 h-14 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
+                    🗺️
                 </div>
-            </a>
+                <h2 class="text-xl font-bold text-slate-100 group-hover:text-sky-400 transition-colors">Editor de Mapas</h2>
+                <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                    Crie mundos inteiros por setores (chunks), com suporte a minimapa, animação de terrenos e exportação em PNG/JSON.
+                </p>
+            </div>
+            <div class="mt-6 flex items-center justify-between text-xs font-semibold text-sky-400">
+                <span>Acessar Editor</span>
+                <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+            </div>
+        </a>
 
-            <!-- Botão 2: Criador de Mapas e Cenários -->
-            <a href="map_custom/map.html" class="card-link">
-                <div class="card-icon">🗺️</div>
-                <div class="card-info">
-                    <h2>Criador de Cenários</h2>
-                    <p>Monte mapas interativos com terrenos e exporte em imagem.</p>
+        <!-- Opção 2: Construction (Com Senha) -->
+        <button id="btnOpenConstruction" class="hub-card text-left group relative bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:border-amber-500/50 transition-all duration-300 shadow-xl overflow-hidden flex flex-col justify-between">
+            <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition-all"></div>
+            <div>
+                <div class="w-14 h-14 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
+                    🏗️
                 </div>
-            </a>
-        </main>
+                <div class="flex items-center gap-2">
+                    <h2 class="text-xl font-bold text-slate-100 group-hover:text-amber-400 transition-colors">Construction</h2>
+                    <span class="text-[10px] bg-rose-500/20 text-rose-400 px-2 py-0.5 rounded border border-rose-500/30 flex items-center gap-1 font-mono">
+                        <i class="fa-solid fa-lock text-[9px]"></i> Requer PIN
+                    </span>
+                </div>
+                <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                    Crie e edite azulejos (tiles 16x16), casarios, muros, vegetações e unidades personalizadas para usar nos seus mapas.
+                </p>
+            </div>
+            <div class="mt-6 flex items-center justify-between text-xs font-semibold text-amber-400">
+                <span>Desbloquear Editor</span>
+                <i class="fa-solid fa-key group-hover:rotate-12 transition-transform"></i>
+            </div>
+        </button>
 
-        <footer>
-            <p>Desenvolvido para a melhor experiência de RPG ✨</p>
-        </footer>
+    </main>
+
+    <!-- Rodapé -->
+    <footer class="w-full max-w-4xl text-center my-6 text-xs text-slate-500">
+        Engine de Edição Ortopédica 2D • Hospedado no GitHub Pages
+    </footer>
+
+    <!-- Modal de Senha (PIN 456) -->
+    <div id="pinModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
+        <div id="pinModalBox" class="bg-slate-900 border border-slate-700 rounded-2xl max-w-xs w-full p-6 shadow-2xl flex flex-col items-center gap-4 relative">
+            <button id="btnCloseModal" class="absolute top-3 right-3 text-slate-500 hover:text-slate-300 text-sm">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="w-12 h-12 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-xl">
+                🔒
+            </div>
+
+            <div class="text-center">
+                <h3 class="text-base font-bold text-slate-100">Acesso Restrito</h3>
+                <p class="text-xs text-slate-400 mt-1">Digite o PIN de 3 dígitos para acessar o Construction</p>
+            </div>
+
+            <!-- Display de PIN -->
+            <div id="pinDisplay" class="bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 w-full text-center text-2xl font-mono tracking-widest text-amber-400 h-11 flex items-center justify-center">
+                ___
+            </div>
+
+            <!-- Teclado Numérico Retro -->
+            <div class="grid grid-cols-3 gap-2 w-full mt-2">
+                <button class="pin-btn" data-num="1">1</button>
+                <button class="pin-btn" data-num="2">2</button>
+                <button class="pin-btn" data-num="3">3</button>
+                <button class="pin-btn" data-num="4">4</button>
+                <button class="pin-btn" data-num="5">5</button>
+                <button class="pin-btn" data-num="6">6</button>
+                <button class="pin-btn" data-num="7">7</button>
+                <button class="pin-btn" data-num="8">8</button>
+                <button class="pin-btn" data-num="9">9</button>
+                <button id="btnPinClear" class="pin-btn text-rose-400">C</button>
+                <button class="pin-btn" data-num="0">0</button>
+                <button id="btnPinSubmit" class="pin-btn bg-amber-600/30 text-amber-400 border-amber-600/50">OK</button>
+            </div>
+
+            <p id="pinErrorMsg" class="text-[11px] text-rose-400 hidden font-semibold">❌ PIN Incorreto! Tente novamente.</p>
+        </div>
     </div>
 
+    <script src="script.js"></script>
 </body>
 </html>
