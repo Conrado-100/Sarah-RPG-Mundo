@@ -4,19 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Criador de Mapas RPG 2D - 16-Bit Retro</title>
-   
-    <!-- Tailwind CSS e FontAwesome -->
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
-     <link rel="stylesheet" href="map.css">
-    
+    <link rel="stylesheet" href="map.css">
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans select-none p-4">
 
     <!-- Cabeçalho Principal -->
     <header class="w-full max-w-7xl mx-auto bg-slate-900 border border-slate-800 rounded-xl p-3 mb-4 shadow-lg flex flex-wrap justify-between items-center gap-4">
-        
         <div class="flex items-center gap-3">
             <a href="../index.html" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs border border-slate-700 transition" title="Voltar ao Menu">
                 <i class="fa-solid fa-map"></i>
@@ -30,7 +26,7 @@
             </div>
         </div>
 
-        <!-- Botões de Ação Superiores -->
+        <!-- Botões do Header -->
         <div class="flex items-center gap-2 text-xs">
             <button id="btnSoundToggle" class="px-3 py-1.5 bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded-lg hover:bg-amber-500/20 font-medium transition flex items-center gap-1.5">
                 <i class="fa-solid fa-volume-high"></i> Som: <span id="soundLabel">LIGADO</span>
@@ -45,7 +41,7 @@
             </button>
             <input type="file" id="fileLoadProject" accept=".json" class="hidden">
 
-            <!-- Botão de Importar JSON do Construction -->
+            <!-- Botão Importar JSON do Construction -->
             <button id="btnImportJSON" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg font-medium shadow transition flex items-center gap-1.5">
                 <i class="fa-solid fa-file-import"></i> Importar JSON
             </button>
@@ -57,15 +53,14 @@
         </div>
     </header>
 
-    <!-- Área de Trabalho Principal -->
+    <!-- Área Principal -->
     <main class="w-full max-w-7xl mx-auto flex-1 flex flex-col lg:flex-row gap-4 items-start">
         
-        <!-- Painel Lateral Esquerdo: Paleta & Navegação -->
+        <!-- Sidebar Esquerda -->
         <aside class="w-full lg:w-80 flex flex-col gap-4">
             
             <!-- Paleta de Elementos -->
             <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg flex flex-col gap-3">
-                
                 <div class="flex items-center justify-between border-b border-slate-800 pb-2">
                     <h2 class="text-xs font-bold text-slate-100 flex items-center gap-2">
                         🎨 Paleta de Elementos
@@ -132,17 +127,14 @@
                 </div>
             </div>
 
-            <!-- Navegação do Mundo & Setores -->
+            <!-- Navegação do Mundo -->
             <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg flex flex-col gap-3">
                 <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-                    <h2 class="text-xs font-bold text-slate-100 flex items-center gap-1.5">
-                        🧭 Navegação do Mundo
-                    </h2>
+                    <h2 class="text-xs font-bold text-slate-100 flex items-center gap-1.5">🧭 Navegação do Mundo</h2>
                     <span class="text-xs font-mono text-sky-400 font-bold">Setor (<span id="sectorX">0</span>, <span id="sectorY">0</span>)</span>
                 </div>
 
                 <div class="flex items-center justify-between gap-2">
-                    <!-- D-Pad de Navegação -->
                     <div class="grid grid-cols-3 gap-1 w-24 h-24">
                         <div></div>
                         <button class="nav-btn" id="btnNavUp">↑</button>
@@ -155,29 +147,22 @@
                         <div></div>
                     </div>
 
-                    <!-- Minimapa 5x5 -->
                     <div class="flex flex-col items-center">
                         <span class="text-[10px] text-slate-400 mb-1">Minimapa 5x5</span>
-                        <div id="minimap" class="w-20 h-20 bg-slate-950 border border-slate-800 rounded grid grid-cols-5 gap-0.5 p-1">
-                            <!-- Preenchido via JS -->
-                        </div>
+                        <div id="minimap" class="w-20 h-20 bg-slate-950 border border-slate-800 rounded grid grid-cols-5 gap-0.5 p-1"></div>
                     </div>
                 </div>
             </div>
 
         </aside>
 
-        <!-- Canvas Central de Edição (12x12 Grade) -->
+        <!-- Canvas Central -->
         <section class="flex-1 flex flex-col items-center justify-start gap-4 w-full">
-            
             <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-2xl flex flex-col items-center gap-4 w-full">
-                
-                <!-- Canvas Grade 12x12 -->
                 <div class="relative bg-slate-950 p-2 rounded-xl border border-slate-800 shadow-inner">
                     <canvas id="mapCanvas" width="576" height="576" class="cursor-crosshair rounded bg-slate-950"></canvas>
                 </div>
 
-                <!-- Botões Inferiores do Setor -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 w-full">
                     <button id="btnClearSector" class="w-full py-2 bg-rose-900/40 hover:bg-rose-800/60 text-rose-300 border border-rose-700/50 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-2">
                         <i class="fa-solid fa-trash-can"></i> Limpar Setor Atual
@@ -186,14 +171,11 @@
                         <i class="fa-solid fa-rotate-left"></i> Resetar Todo o Mundo
                     </button>
                 </div>
-
             </div>
-
         </section>
 
     </main>
 
-    <!-- JavaScript Integrado -->
-    <script> src="map.js"</script>
+    <script src="map.js"></script>
 </body>
 </html>
