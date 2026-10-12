@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Editor de Dungeon RPG</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1020;--panel:#121a2c;--panel2:#172238;--border:#2b3a55;--text:#e5edf9;--muted:#94a3b8;--green:#10b981;--blue:#38bdf8;--amber:#f59e0b;--red:#ef4444}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+button,input,select{font:inherit}button{cursor:pointer;border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);background:#1e293b}button:hover{background:#293852}button:disabled{opacity:.4;cursor:not-allowed}.primary{background:#065f46;border-color:#059669}.primary:hover{background:#047857}.warn{background:#78350f;border-color:#b45309}.danger{background:#7f1d1d;border-color:#b91c1c}
+header{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:12px 16px;background:#0e1728;border-bottom:1px solid var(--border)}h1{font-size:18px;margin:0;font-weight:800}h2{font-size:13px;text-transform:uppercase;letter-spacing:.07em;color:#b6c7df;margin:0 0 9px}small,.muted{color:var(--muted)}.brand{display:flex;align-items:center;gap:10px}.dungeon-id{font:700 12px ui-monospace,monospace;background:#052e2b;color:#6ee7b7;border:1px solid #065f46;padding:4px 8px;border-radius:6px}.layout{max-width:1500px;margin:0 auto;padding:14px;display:grid;grid-template-columns:230px minmax(0,1fr);gap:14px}.panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px;min-width:0}.sidebar{display:flex;flex-direction:column;gap:12px}.group{display:grid;grid-template-columns:1fr 1fr;gap:7px}.group button{min-width:0;font-size:12px}.group button.active,.toolbutton.active{outline:2px solid var(--green);background:#064e3b;border-color:#10b981}.full{width:100%}.field{display:flex;flex-direction:column;gap:5px;margin:7px 0}.field input,.field select{width:100%;padding:8px;border:1px solid var(--border);background:#0b1220;color:var(--text);border-radius:7px}.toolrow{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px}.workspace{min-width:0;display:flex;flex-direction:column;gap:12px}.canvas-wrap{overflow:auto;background:#080d18;border:1px solid var(--border);border-radius:10px;padding:10px;max-height:calc(100vh - 260px);min-height:350px}canvas{display:block;width:min(100%,1080px);height:auto;margin:0 auto;image-rendering:pixelated;touch-action:none;border:1px solid #334155}.statusbar{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin-top:9px;font-size:12px;color:var(--muted)}.tile-swatch{display:inline-block;width:13px;height:13px;border:1px solid #64748b;border-radius:3px;vertical-align:-2px;margin-right:5px}.hint{font-size:12px;color:var(--muted);margin-top:8px}.separator{height:1px;background:var(--border);margin:10px 0}.file-input{display:none}.notice{border:1px solid #854d0e;background:#422006;color:#fde68a;padding:8px;border-radius:8px;font-size:12px}.tag{font-size:11px;color:#93c5fd;border:1px solid #1d4ed8;background:#172554;border-radius:5px;padding:2px 6px}
+@media(max-width:850px){.layout{grid-template-columns:1fr}.sidebar{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));align-items:start}.canvas-wrap{max-height:65vh;min-height:300px}header{position:static}}
+@media(max-width:500px){.layout{padding:8px}.panel{padding:10px}.toolrow button{flex:1}.canvas-wrap{padding:4px;min-height:220px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><div aria-hidden="true" style="font-size:24px">▦</div><div><h1>Editor de Dungeon</h1><small>Salas, corredores, terrenos e inimigos</small></div><span class="dungeon-id" id="dungeonIdBadge">dungeon_001</span></div>
+  <div class="toolrow" style="margin:0"><button id="btnUndo">↶ Desfazer</button><button id="btnRedo">↷ Refazer</button><button id="btnSave" class="primary">Salvar</button><button id="btnExport">Exportar JSON</button><button id="btnImport">Importar JSON</button><button id="btnReturn" class="warn">↩ Voltar ao mapa</button></div>
+</header>
+<div class="layout">
+  <aside class="sidebar">
+    <section class="panel">
+      <h2>Ferramentas</h2>
+      <div class="group" id="toolButtons">
+        <button data-tool="paint" class="active">Lápis / pintar</button><button data-tool="room">Criar sala</button>
+        <button data-tool="corridor">Corredor</button><button data-tool="enemy">Inimigo</button>
+        <button data-tool="select">Mover inimigo</button><button data-tool="erase">Apagar</button>
+      </div>
+      <p class="hint">Arraste para pintar, desenhar uma sala retangular ou traçar um corredor. Na ferramenta Inimigo, clique em um espaço para colocar; clique em um inimigo existente para removê-lo ou arraste-o para movê-lo.</p>
+    </section>
+    <section class="panel">
+      <h2>Terrenos e estruturas</h2>
+      <div class="group" id="tileButtons">
+        <button data-tile="empty"><span class="tile-swatch" style="background:#0b1020"></span>Vazio</button>
+        <button data-tile="floor"><span class="tile-swatch" style="background:#334155"></span>Chão</button>
+        <button data-tile="wall"><span class="tile-swatch" style="background:#64748b"></span>Parede</button>
+        <button data-tile="water"><span class="tile-swatch" style="background:#0369a1"></span>Água</button>
+        <button data-tile="lava"><span class="tile-swatch" style="background:#c2410c"></span>Lava</button>
+        <button data-tile="door"><span class="tile-swatch" style="background:#92400e"></span>Porta</button>
+        <button data-tile="entrance"><span class="tile-swatch" style="background:#059669"></span>Entrada</button>
+        <button data-tile="exit"><span class="tile-swatch" style="background:#d97706"></span>Saída</button>
+        <button data-tile="stairs_up">Escada ↑</button><button data-tile="stairs_down">Escada ↓</button>
+      </div>
+      <div class="hint">Terreno selecionado: <strong id="selectedTileLabel">Chão</strong></div>
+    </section>
+    <section class="panel">
+      <h2>Inimigos</h2>
+      <label class="field">Tipo do inimigo
+        <select id="enemyType">
+          <option value="slime">Slime</option><option value="goblin">Goblin</option><option value="skeleton">Esqueleto</option><option value="orc">Orc</option><option value="mage">Mago sombrio</option><option value="boss">Chefe</option>
+        </select>
+      </label>
+      <p class="hint">Selecione a ferramenta <strong>Inimigo</strong> e clique no mapa para adicionar.</p>
+    </section>
+    <section class="panel">
+      <h2>Mapa</h2>
+      <div class="field"><label for="mapName">Nome do interior</label><input id="mapName" maxlength="80" placeholder="Ex.: Cripta esquecida"></div>
+      <div class="group"><button id="btnClear">Limpar mapa</button><button id="btnFillFloor">Preencher chão</button></div>
+      <div class="separator"></div>
+      <div class="field"><label for="mapWidth">Colunas (reinicia o mapa)</label><input id="mapWidth" type="number" min="10" max="50" value="30"></div>
+      <div class="field"><label for="mapHeight">Linhas (reinicia o mapa)</label><input id="mapHeight" type="number" min="10" max="35" value="20"></div>
+      <button class="full" id="btnResize">Criar tamanho novo</button>
+      <p class="hint">Redimensionar apaga o desenho atual; salve ou exporte antes.</p>
+    </section>
+    <section class="panel">
+      <h2>Estado do salvamento</h2>
+      <div id="saveStatus" aria-live="polite">Ainda não salvo nesta sessão.</div>
+      <p class="hint">O interior é salvo localmente por ID, separado dos outros interiores. Use Exportar JSON para guardar uma cópia externa.</p>
+      <div id="returnNotice" class="notice" style="display:none;margin-top:9px">Este interior foi aberto a partir do mundo externo. O ID está bloqueado para manter a associação com a estrutura Dungeon.</div>
+    </section>
+  </aside>
+  <main class="workspace">
+    <section class="panel">
+      <div class="toolrow" style="align-items:center;margin-bottom:6px"><strong>Área de edição</strong><span class="tag">Clique e arraste</span><span class="muted" id="mapDimensions">30 × 20</span><span style="flex:1"></span><button id="btnGrid">Grade: ligada</button></div>
+      <div class="canvas-wrap"><canvas id="dungeonCanvas" width="840" height="560" aria-label="Grade de edição da dungeon"></canvas></div>
+      <div class="statusbar"><span id="coordinateLabel">Posição: —</span><span id="toolStatus">Ferramenta: Lápis / pintar</span><span id="entityCount">Inimigos: 0</span></div>
+    </section>
+    <section class="panel"><h2>Como editar</h2><div class="hint" style="margin:0">1. Escolha Lápis e um terreno para pintar células. 2. Use Criar sala e arraste de um canto ao outro para criar paredes externas e chão interno (mínimo 3 × 3). 3. Use Corredor e arraste para ligar dois pontos em linha reta. 4. Coloque inimigos e mova-os com Mover inimigo. 5. Salve antes de voltar ao mundo.</div></section>
+  </main>
+</div>
+<input id="jsonFile" class="file-input" type="file" accept=".json,application/json">
+<script>
+'use strict';
+const STORAGE_PREFIX = 'rpgDungeonEditor_v1_';
+const DEFAULT_COLS = 30, DEFAULT_ROWS = 20, CELL = 28;
+const TILE_LABELS = {empty:'Vazio',floor:'Chão',wall:'Parede',water:'Água',lava:'Lava',door:'Porta',entrance:'Entrada',exit:'Saída',stairs_up:'Escada para cima',stairs_down:'Escada para baixo'};
+const TOOL_LABELS = {paint:'Lápis / pintar',room:'Criar sala',corridor:'Corredor',enemy:'Inimigo',select:'Mover inimigo',erase:'Apagar'};
+const ENEMY_LABELS = {slime:'Slime',goblin:'Goblin',skeleton:'Esqueleto',orc:'Orc',mage:'Mago sombrio',boss:'Chefe'};
+const COLORS = {empty:'#0b1020',floor:'#344256',wall:'#64748b',water:'#0369a1',lava:'#c2410c',door:'#92400e',entrance:'#047857',exit:'#b45309',stairs_up:'#475569',stairs_down:'#475569'};
+const urlParams = new URLSearchParams(window.location.search);
+let dungeonId = (urlParams.get('id') || 'dungeon_001').slice(0,64);
+const idLocked = Boolean(urlParams.get('returnTo'));
+const origin = {
+  returnTo: sanitizeReturnTo(urlParams.get('returnTo')) || './criador_de_mapas_rpg_16_bit.html',
+  sx: parseIntOr(urlParams.get('sx'), 0), sy: parseIntOr(urlParams.get('sy'), 0),
+  px: parseIntOr(urlParams.get('px'), 0), py: parseIntOr(urlParams.get('py'), 0)
+};
+const canvas = document.getElementById('dungeonCanvas');
+const ctx = canvas.getContext('2d');
+let showGrid = true, activeTool = 'paint', selectedTile = 'floor';
+let hoverCell = null, pointerStart = null, pointerDown = false, actionBefore = null, draggingEnemy = null, roomPreview = null;
+let saveTimer = null;
+let state = createEmptyState(DEFAULT_COLS, DEFAULT_ROWS);
+let undoStack = [], redoStack = [];
+let lastSavedAt = null;
+
+function parseIntOr(v, fallback){ const n = parseInt(v,10); return Number.isFinite(n) ? n : fallback; }
+function sanitizeReturnTo(value){ if(!value) return null; if(/^[a-z][a-z0-9+.-]*:/i.test(value) || value.startsWith('//')) return null; return value; }
+function storageKey(id=dungeonId){ return STORAGE_PREFIX + id; }
+function clone(v){ return JSON.parse(JSON.stringify(v)); }
+function createEmptyState(cols, rows){ return {formatVersion:1,dungeonId,name:'',cols,rows,tiles:Array.from({length:rows},()=>Array(cols).fill('empty')),enemies:[],updatedAt:null}; }
+function tileInBounds(x,y){return x>=0&&y>=0&&x<state.cols&&y<state.rows;}
+function enemyAt(x,y){return state.enemies.find(e=>e.x===x&&e.y===y)||null;}
+function saveStatus(message, good=true){const el=document.getElementById('saveStatus');el.textContent=message;el.style.color=good?'#6ee7b7':'#fca5a5';}
+function serializeState(){state.name=document.getElementById('mapName').value.trim();state.dungeonId=dungeonId;return JSON.stringify(state);}
+function saveDungeon(showMessage=true){
+  try{state.name=document.getElementById('mapName').value.trim();state.dungeonId=dungeonId;state.updatedAt=new Date().toISOString();localStorage.setItem(storageKey(),JSON.stringify(state));lastSavedAt=Date.now();if(showMessage)saveStatus('Salvo às '+new Date(lastSavedAt).toLocaleTimeString('pt-BR'));return true;}
+  catch(err){saveStatus('Não foi possível salvar no armazenamento local. Exporte o JSON para não perder o trabalho.',false);console.warn('Falha ao salvar dungeon:',err);return false;}
+}
+function scheduleSave(){if(saveTimer)clearTimeout(saveTimer);saveStatus('Alterações pendentes…',true);saveTimer=setTimeout(()=>{saveTimer=null;saveDungeon(true);},600);}
+function normalizeLoaded(data){
+  const cols=Math.min(50,Math.max(10,parseIntOr(data.cols,DEFAULT_COLS)));
+  const rows=Math.min(35,Math.max(10,parseIntOr(data.rows,DEFAULT_ROWS)));
+  const result=createEmptyState(cols,rows);result.dungeonId=dungeonId;result.name=typeof data.name==='string'?data.name:'';
+  if(Array.isArray(data.tiles)){for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){const t=data.tiles[y]&&data.tiles[y][x];result.tiles[y][x]=Object.prototype.hasOwnProperty.call(COLORS,t)?t:'empty';}}
+  if(Array.isArray(data.enemies)){const seen=new Set();for(const e of data.enemies){if(!e||!tileInData(e.x,e.y,cols,rows)||!ENEMY_LABELS[e.type])continue;const k=e.x+','+e.y;if(seen.has(k))continue;seen.add(k);result.enemies.push({uid:typeof e.uid==='string'?e.uid:makeUid(),type:e.type,x:e.x,y:e.y});}}
+  result.updatedAt=data.updatedAt||null;return result;
+}
+function tileInData(x,y,cols,rows){return Number.isInteger(x)&&Number.isInteger(y)&&x>=0&&y>=0&&x<cols&&y<rows;}
+function makeUid(){return 'enemy_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);}
+function loadDungeon(){
+  try{const raw=localStorage.getItem(storageKey());if(raw){const data=JSON.parse(raw);if(data&&(!data.dungeonId||data.dungeonId===dungeonId)){state=normalizeLoaded(data);document.getElementById('mapName').value=state.name;saveStatus(data.updatedAt?'Interior carregado. Última gravação: '+new Date(data.updatedAt).toLocaleString('pt-BR'):'Interior carregado.');}else{state=createEmptyState(DEFAULT_COLS,DEFAULT_ROWS);state.dungeonId=dungeonId;saveStatus('Interior novo — ainda não salvo.');}}
+  else {state=createEmptyState(DEFAULT_COLS,DEFAULT_ROWS);state.dungeonId=dungeonId;saveStatus('Interior novo — ainda não salvo.');}}
+  catch(err){state=createEmptyState(DEFAULT_COLS,DEFAULT_ROWS);state.dungeonId=dungeonId;saveStatus('Não foi possível ler o salvamento anterior. O interior foi iniciado vazio.',false);console.warn(err);}
+  document.getElementById('mapWidth').value=state.cols;document.getElementById('mapHeight').value=state.rows;updateHeader();resizeCanvas();resetHistory();render();
+}
+function updateHeader(){document.title='Dungeon '+dungeonId+' — Editor RPG';document.getElementById('dungeonIdBadge').textContent=dungeonId;document.getElementById('mapDimensions').textContent=state.cols+' × '+state.rows;document.getElementById('entityCount').textContent='Inimigos: '+state.enemies.length;document.getElementById('returnNotice').style.display=idLocked?'block':'none';}
+function resizeCanvas(){canvas.width=state.cols*CELL;canvas.height=state.rows*CELL;}
+function snapshot(){return JSON.stringify(state);}
+function resetHistory(){undoStack=[snapshot()];redoStack=[];updateHistoryButtons();}
+function beginAction(){actionBefore=snapshot();}
+function commitAction(){if(actionBefore===null)return;const after=snapshot();if(after!==actionBefore){undoStack.push(after);if(undoStack.length>80)undoStack.shift();redoStack=[];updateHistoryButtons();updateHeader();render();scheduleSave();}actionBefore=null;}
+function updateHistoryButtons(){document.getElementById('btnUndo').disabled=undoStack.length<=1;document.getElementById('btnRedo').disabled=redoStack.length===0;}
+function restoreSnapshot(s){state=JSON.parse(s);state.dungeonId=dungeonId;document.getElementById('mapName').value=state.name||'';document.getElementById('mapWidth').value=state.cols;document.getElementById('mapHeight').value=state.rows;resizeCanvas();updateHeader();render();scheduleSave();}
+function undo(){if(undoStack.length<=1)return;redoStack.push(undoStack.pop());restoreSnapshot(undoStack[undoStack.length-1]);updateHistoryButtons();}
+function redo(){if(!redoStack.length)return;const s=redoStack.pop();undoStack.push(s);restoreSnapshot(s);updateHistoryButtons();}
+function getCellFromEvent(e){const r=canvas.getBoundingClientRect();return{x:Math.floor((e.clientX-r.left)/r.width*state.cols),y:Math.floor((e.clientY-r.top)/r.height*state.rows)};}
+function setTile(x,y,t){if(!tileInBounds(x,y))return;if(t==='entrance'||t==='exit'){for(let yy=0;yy<state.rows;yy++)for(let xx=0;xx<state.cols;xx++)if(state.tiles[yy][xx]===t)state.tiles[yy][xx]='floor';}state.tiles[y][x]=t;}
+function applyRoom(a,b){const x1=Math.max(0,Math.min(a.x,b.x)),x2=Math.min(state.cols-1,Math.max(a.x,b.x));const y1=Math.max(0,Math.min(a.y,b.y)),y2=Math.min(state.rows-1,Math.max(a.y,b.y));if(x2-x1+1<3||y2-y1+1<3){saveStatus('A sala precisa ter pelo menos 3 × 3 células.',false);return;}for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++)setTile(x,y,(x===x1||x===x2||y===y1||y===y2)?'wall':'floor');}
+function applyCorridor(a,b){let x1=a.x,y1=a.y,x2=b.x,y2=b.y;if(Math.abs(x2-x1)>=Math.abs(y2-y1))y2=y1;else x2=x1;const dx=Math.sign(x2-x1),dy=Math.sign(y2-y1);let x=x1,y=y1;const points=[];while(true){points.push({x,y});if(x===x2&&y===y2)break;x+=dx;y+=dy;}for(const p of points){setTile(p.x,p.y,'floor');if(dx!==0){if(tileInBounds(p.x,p.y-1)&&state.tiles[p.y-1][p.x]==='empty')setTile(p.x,p.y-1,'wall');if(tileInBounds(p.x,p.y+1)&&state.tiles[p.y+1][p.x]==='empty')setTile(p.x,p.y+1,'wall');}else{if(tileInBounds(p.x-1,p.y)&&state.tiles[p.y][p.x-1]==='empty')setTile(p.x-1,p.y,'wall');if(tileInBounds(p.x+1,p.y)&&state.tiles[p.y][p.x+1]==='empty')setTile(p.x+1,p.y,'wall');}}}
+function applyPaint(x,y){if(!tileInBounds(x,y))return;setTile(x,y,selectedTile);}
+function applyErase(x,y){if(!tileInBounds(x,y))return;setTile(x,y,'empty');state.enemies=state.enemies.filter(e=>e.x!==x||e.y!==y);}
+function applyEnemyClick(x,y){if(!tileInBounds(x,y))return;const existing=enemyAt(x,y);if(existing){draggingEnemy={uid:existing.uid,startX:x,startY:y,lastX:x,lastY:y,moved:false};return;}if(state.tiles[y][x]==='wall'||state.tiles[y][x]==='empty'||state.tiles[y][x]==='water'||state.tiles[y][x]==='lava'){saveStatus('Coloque o inimigo em uma célula de chão, porta, entrada ou saída.',false);return;}state.enemies.push({uid:makeUid(),type:document.getElementById('enemyType').value,x,y});}
+function applyEnemyMoveOrRemove(x,y,clickRemoves=false){if(!draggingEnemy)return;const enemy=state.enemies.find(e=>e.uid===draggingEnemy.uid);if(!enemy){draggingEnemy=null;return;}if(draggingEnemy.moved){if(tileInBounds(x,y)&&!enemyAt(x,y)&&!['empty','wall','water','lava'].includes(state.tiles[y][x])){enemy.x=x;enemy.y=y;}else if(enemyAt(x,y)&&enemyAt(x,y).uid!==enemy.uid){saveStatus('Já existe um inimigo nessa célula.',false);}}else if(clickRemoves){state.enemies=state.enemies.filter(e=>e.uid!==draggingEnemy.uid);}draggingEnemy=null;}
+function paintEnemy(x,y,type){const cx=x*CELL+CELL/2,cy=y*CELL+CELL/2;let color='#34d399',accent='#064e3b';if(type==='goblin'){color='#a3e635';accent='#365314'}else if(type==='skeleton'){color='#e2e8f0';accent='#64748b'}else if(type==='orc'){color='#4ade80';accent='#166534'}else if(type==='mage'){color='#c084fc';accent='#581c87'}else if(type==='boss'){color='#f87171';accent='#7f1d1d'}else if(type==='slime'){color='#22d3ee';accent='#155e75'}ctx.fillStyle='rgba(0,0,0,.4)';ctx.fillRect(cx-8,cy+8,16,3);ctx.fillStyle=accent;ctx.fillRect(cx-9,cy-8,18,18);ctx.fillStyle=color;ctx.fillRect(cx-7,cy-10,14,16);ctx.fillStyle='#0f172a';ctx.fillRect(cx-4,cy-4,2,3);ctx.fillRect(cx+3,cy-4,2,3);if(type==='boss'){ctx.fillStyle='#fbbf24';ctx.fillRect(cx-7,cy-13,4,5);ctx.fillRect(cx+3,cy-13,4,5);}}
+function drawTile(x,y,t){const px=x*CELL,py=y*CELL;ctx.fillStyle=COLORS[t]||COLORS.empty;ctx.fillRect(px,py,CELL,CELL);if(t==='floor'){ctx.fillStyle='rgba(203,213,225,.12)';ctx.fillRect(px+5,py+6,3,2);ctx.fillRect(px+19,py+20,2,3);}else if(t==='wall'){ctx.fillStyle='#94a3b8';ctx.fillRect(px+2,py+2,CELL-4,4);ctx.fillStyle='#475569';ctx.fillRect(px+2,py+CELL/2,CELL-4,1);ctx.fillRect(px+CELL/2,py+CELL/2,1,CELL/2-2);}else if(t==='water'){ctx.strokeStyle='#7dd3fc';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(px+4,py+9);ctx.lineTo(px+11,py+7);ctx.lineTo(px+18,py+9);ctx.lineTo(px+24,py+7);ctx.stroke();ctx.beginPath();ctx.moveTo(px+3,py+19);ctx.lineTo(px+10,py+17);ctx.lineTo(px+17,py+19);ctx.lineTo(px+25,py+17);ctx.stroke();}else if(t==='lava'){ctx.fillStyle='#fb923c';ctx.fillRect(px+7,py+7,5,4);ctx.fillRect(px+17,py+17,6,5);}else if(t==='door'){ctx.fillStyle='#451a03';ctx.fillRect(px+6,py+3,CELL-12,CELL-5);ctx.fillStyle='#b45309';ctx.fillRect(px+8,py+5,CELL-16,CELL-9);ctx.fillStyle='#fcd34d';ctx.fillRect(px+CELL-11,py+14,2,2);}else if(t==='entrance'||t==='exit'){ctx.fillStyle='#f8fafc';ctx.font='bold 14px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(t==='entrance'?'E':'S',px+CELL/2,py+CELL/2);}else if(t==='stairs_up'||t==='stairs_down'){ctx.strokeStyle='#e2e8f0';ctx.lineWidth=2;for(let i=0;i<4;i++){const yy=t==='stairs_up'?py+CELL-5-i*5:py+5+i*5;ctx.beginPath();ctx.moveTo(px+5,yy);ctx.lineTo(px+CELL-5,yy);ctx.stroke();}}}
+function render(){ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle=COLORS.empty;ctx.fillRect(0,0,canvas.width,canvas.height);for(let y=0;y<state.rows;y++)for(let x=0;x<state.cols;x++){drawTile(x,y,state.tiles[y][x]);}for(const e of state.enemies){if(draggingEnemy&&draggingEnemy.uid===e.uid&&draggingEnemy.moved&&hoverCell)continue;paintEnemy(e.x,e.y,e.type);}if(draggingEnemy&&draggingEnemy.moved&&hoverCell&&tileInBounds(hoverCell.x,hoverCell.y)){const e=state.enemies.find(e=>e.uid===draggingEnemy.uid);if(e)paintEnemy(hoverCell.x,hoverCell.y,e.type);}if(roomPreview&&activeTool==='room'){const x1=Math.min(roomPreview.a.x,roomPreview.b.x),x2=Math.max(roomPreview.a.x,roomPreview.b.x),y1=Math.min(roomPreview.a.y,roomPreview.b.y),y2=Math.max(roomPreview.a.y,roomPreview.b.y);ctx.fillStyle='rgba(16,185,129,.18)';ctx.fillRect(x1*CELL,y1*CELL,(x2-x1+1)*CELL,(y2-y1+1)*CELL);ctx.strokeStyle='#34d399';ctx.lineWidth=2;ctx.strokeRect(x1*CELL+1,y1*CELL+1,(x2-x1+1)*CELL-2,(y2-y1+1)*CELL-2);}if(roomPreview&&activeTool==='corridor'){ctx.fillStyle='rgba(56,189,248,.22)';const a=roomPreview.a,b=roomPreview.b;if(Math.abs(b.x-a.x)>=Math.abs(b.y-a.y)){const x=Math.min(a.x,b.x);ctx.fillRect(x*CELL,a.y*CELL,(Math.abs(b.x-a.x)+1)*CELL,CELL);}else{const y=Math.min(a.y,b.y);ctx.fillRect(a.x*CELL,y*CELL,CELL,(Math.abs(b.y-a.y)+1)*CELL);}}if(showGrid){ctx.strokeStyle='rgba(148,163,184,.22)';ctx.lineWidth=1;ctx.beginPath();for(let x=0;x<=state.cols;x++){ctx.moveTo(x*CELL+.5,0);ctx.lineTo(x*CELL+.5,state.rows*CELL);}for(let y=0;y<=state.rows;y++){ctx.moveTo(0,y*CELL+.5);ctx.lineTo(state.cols*CELL,y*CELL+.5);}ctx.stroke();}if(hoverCell&&tileInBounds(hoverCell.x,hoverCell.y)){ctx.strokeStyle='#f8fafc';ctx.lineWidth=2;ctx.strokeRect(hoverCell.x*CELL+1,hoverCell.y*CELL+1,CELL-2,CELL-2);}updateHeader();}
+function chooseTool(tool){activeTool=tool;document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool));document.getElementById('toolStatus').textContent='Ferramenta: '+TOOL_LABELS[tool];render();}
+function chooseTile(tile){selectedTile=tile;document.querySelectorAll('[data-tile]').forEach(b=>b.classList.toggle('active',b.dataset.tile===tile));document.getElementById('selectedTileLabel').textContent=TILE_LABELS[tile];if(tile==='empty')chooseTool('erase');else chooseTool('paint');}
+canvas.addEventListener('pointerdown',e=>{if(e.button!==0)return;const c=getCellFromEvent(e);if(!tileInBounds(c.x,c.y))return;pointerDown=true;pointerStart=c;hoverCell=c;canvas.setPointerCapture?.(e.pointerId);beginAction();if(activeTool==='paint')applyPaint(c.x,c.y);else if(activeTool==='erase')applyErase(c.x,c.y);else if(activeTool==='enemy')applyEnemyClick(c.x,c.y);else if(activeTool==='select'){const en=enemyAt(c.x,c.y);if(en)draggingEnemy={uid:en.uid,startX:c.x,startY:c.y,lastX:c.x,lastY:c.y,moved:false};}else if(activeTool==='room'||activeTool==='corridor')roomPreview={a:c,b:c};render();});
+canvas.addEventListener('pointermove',e=>{const c=getCellFromEvent(e);hoverCell=c;if(pointerDown&&tileInBounds(c.x,c.y)){if(activeTool==='paint')applyPaint(c.x,c.y);else if(activeTool==='erase')applyErase(c.x,c.y);else if(activeTool==='room'||activeTool==='corridor'){roomPreview={a:pointerStart,b:c};}else if((activeTool==='enemy'||activeTool==='select')&&draggingEnemy){if(c.x!==draggingEnemy.startX||c.y!==draggingEnemy.startY)draggingEnemy.moved=true;draggingEnemy.lastX=c.x;draggingEnemy.lastY=c.y;}}render();});
+function finishPointer(e){if(!pointerDown)return;const c=hoverCell||pointerStart;if(activeTool==='room'&&roomPreview)applyRoom(roomPreview.a,roomPreview.b);else if(activeTool==='corridor'&&roomPreview)applyCorridor(roomPreview.a,roomPreview.b);else if((activeTool==='enemy'||activeTool==='select')&&draggingEnemy)applyEnemyMoveOrRemove(c.x,c.y,activeTool==='enemy');pointerDown=false;pointerStart=null;roomPreview=null;draggingEnemy=null;commitAction();render();}
+canvas.addEventListener('pointerup',finishPointer);canvas.addEventListener('pointercancel',finishPointer);canvas.addEventListener('pointerleave',()=>{if(!pointerDown){hoverCell=null;render();}});
+document.querySelectorAll('[data-tool]').forEach(b=>b.addEventListener('click',()=>chooseTool(b.dataset.tool)));
+document.querySelectorAll('[data-tile]').forEach(b=>b.addEventListener('click',()=>chooseTile(b.dataset.tile)));
+document.getElementById('btnUndo').addEventListener('click',undo);document.getElementById('btnRedo').addEventListener('click',redo);
+document.getElementById('btnSave').addEventListener('click',()=>saveDungeon(true));
+document.getElementById('btnGrid').addEventListener('click',e=>{showGrid=!showGrid;e.currentTarget.textContent='Grade: '+(showGrid?'ligada':'desligada');render();});
+document.getElementById('btnClear').addEventListener('click',()=>{if(!confirm('Limpar todas as células e remover os inimigos deste interior?'))return;beginAction();state.tiles=Array.from({length:state.rows},()=>Array(state.cols).fill('empty'));state.enemies=[];commitAction();});
+document.getElementById('btnFillFloor').addEventListener('click',()=>{beginAction();state.tiles=Array.from({length:state.rows},()=>Array(state.cols).fill('floor'));commitAction();});
+document.getElementById('btnResize').addEventListener('click',()=>{const cols=parseIntOr(document.getElementById('mapWidth').value,DEFAULT_COLS),rows=parseIntOr(document.getElementById('mapHeight').value,DEFAULT_ROWS);if(cols<10||cols>50||rows<10||rows>35){alert('Use de 10 a 50 colunas e de 10 a 35 linhas.');return;}if(!confirm('Criar um mapa novo apagará o desenho atual desta dungeon. Continue?'))return;state=createEmptyState(cols,rows);state.dungeonId=dungeonId;document.getElementById('mapName').value='';resizeCanvas();resetHistory();updateHeader();render();scheduleSave();});
+document.getElementById('mapName').addEventListener('input',()=>{state.name=document.getElementById('mapName').value;scheduleSave();});
+document.getElementById('btnExport').addEventListener('click',()=>{try{const data=serializeState();const blob=new Blob([data],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=dungeonId+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);saveStatus('JSON exportado para download.');}catch(err){alert('Falha ao exportar JSON: '+err.message);}});
+document.getElementById('btnImport').addEventListener('click',()=>document.getElementById('jsonFile').click());
+document.getElementById('jsonFile').addEventListener('change',async e=>{const file=e.target.files&&e.target.files[0];if(!file)return;try{const data=JSON.parse(await file.text());if(idLocked&&data.dungeonId&&data.dungeonId!==dungeonId){alert('Este arquivo pertence a '+data.dungeonId+'. O ID desta dungeon é '+dungeonId+' e está bloqueado para manter o vínculo com o mundo.');return;}if(!confirm('Importar este JSON substituirá o interior que está aberto. Continuar?'))return;beginAction();state=normalizeLoaded(data);state.dungeonId=dungeonId;document.getElementById('mapName').value=state.name||'';resizeCanvas();commitAction();saveStatus('JSON importado; salve para confirmar.');}catch(err){alert('Não foi possível importar: '+err.message);}finally{e.target.value='';}});
+function buildReturnUrl(){const raw=origin.returnTo;const hashIndex=raw.indexOf('#');const hash=hashIndex>=0?raw.slice(hashIndex):'';const base=hashIndex>=0?raw.slice(0,hashIndex):raw;const q=base.indexOf('?');const path=q>=0?base.slice(0,q):base;const params=new URLSearchParams(q>=0?base.slice(q+1):'');params.set('return','1');params.set('id',dungeonId);params.set('sx',String(origin.sx));params.set('sy',String(origin.sy));params.set('px',String(origin.px));params.set('py',String(origin.py));return path+'?'+params.toString()+hash;}
+document.getElementById('btnReturn').addEventListener('click',()=>{if(saveTimer){clearTimeout(saveTimer);saveTimer=null;}saveDungeon(true);window.location.href=buildReturnUrl();});
+window.addEventListener('keydown',e=>{const key=e.key.toLowerCase();if((e.ctrlKey||e.metaKey)&&key==='z'){e.preventDefault();if(e.shiftKey)redo();else undo();}else if((e.ctrlKey||e.metaKey)&&key==='y'){e.preventDefault();redo();}else if(key==='escape'){pointerDown=false;pointerStart=null;roomPreview=null;draggingEnemy=null;render();}});
+window.addEventListener('beforeunload',()=>{if(saveTimer)clearTimeout(saveTimer);saveDungeon(false);});
+loadDungeon();
+</script>
+</body>
+</html>

@@ -1,0 +1,3330 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Integração de Dungeon: abertura por duplo clique, IDs persistentes e retorno ao setor de origem. -->
+    <title>Criador de Mapas RPG 2D - 16-Bit Retro</title>
+    
+    <!-- Bibliotecas Externas -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
+        
+        .palette-btn {
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            color: #cbd5e1;
+            font-size: 0.72rem;
+            padding: 0.4rem 0.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            width: 100%;
+        }
+        .palette-btn:hover { background-color: #1e293b; border-color: #64748b; color: #f8fafc; }
+        .palette-btn.active {
+            background-color: #064e3b;
+            border-color: #10b981;
+            color: #34d399;
+            font-weight: 600;
+        }
+
+        .nav-btn {
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            color: #38bdf8;
+            font-weight: bold;
+            font-size: 0.75rem;
+            border-radius: 0.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+        .nav-btn:hover { background-color: #1e293b; border-color: #38bdf8; }
+        .tool-btn {
+            background-color: #0f172a; border: 1px solid #334155; color: #cbd5e1;
+            font-size: 0.62rem; padding: 0.4rem 0.2rem; border-radius: 0.5rem;
+            transition: all 0.15s ease; display: flex; flex-direction: column; align-items: center; gap: 0.2rem;
+            cursor: pointer;
+        }
+        .tool-btn:hover { background-color: #1e293b; border-color: #64748b; color: #f8fafc; }
+        .tool-btn.active { background-color: #1e3a8a; border-color: #3b82f6; color: #93c5fd; font-weight: 600; }
+        .brush-btn {
+            background-color: #0f172a; border: 1px solid #334155; color: #cbd5e1; font-size: 0.68rem;
+            padding: 0.35rem 0; border-radius: 0.4rem; transition: all 0.15s ease; cursor: pointer;
+        }
+        .brush-btn:hover { background-color: #1e293b; border-color: #64748b; }
+        .brush-btn.active { background-color: #064e3b; border-color: #10b981; color: #34d399; font-weight: 600; }
+        .palette-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans select-none p-2 sm:p-4 overflow-x-hidden">
+
+    <!-- Cabeçalho Principal -->
+    <header class="w-full max-w-7xl mx-auto bg-slate-900 border border-slate-800 rounded-xl p-3 mb-4 shadow-lg flex flex-wrap justify-between items-center gap-3 sm:gap-4">
+        <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+            <a href="../index.html" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs border border-slate-700 transition flex-shrink-0" title="Voltar ao Menu Principal">
+                <i class="fa-solid fa-house"></i> Menu
+            </a>
+            <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                    <h1 class="text-base font-black text-slate-100 tracking-wide">Criador de Mapas RPG 2D</h1>
+                    <span class="text-[10px] bg-emerald-500/20 text-emerald-400 font-mono font-bold px-2 py-0.5 rounded border border-emerald-500/30">16-Bit Expanded</span>
+                </div>
+                <p class="text-[11px] text-slate-400">Edição Ortopédica 2D - Grade 12x12 com Setores Infinitos</p>
+            </div>
+        </div>
+
+        <!-- Botões do Header -->
+        <div class="flex flex-wrap items-center gap-2 text-xs">
+            <button id="btnSoundToggle" class="px-3 py-1.5 bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded-lg hover:bg-amber-500/20 font-medium transition flex items-center gap-1.5">
+                <i class="fa-solid fa-volume-high"></i> Som: <span id="soundLabel">LIGADO</span>
+            </button>
+
+            <button id="btnTestMode" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-600 rounded-lg font-medium shadow transition flex items-center gap-1.5" title="Alterna entre o modo de edição e um modo de teste somente-leitura">
+                <i class="fa-solid fa-gamepad"></i> Modo de Teste
+            </button>
+
+            <button id="btnViewMode" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-600 rounded-lg font-medium shadow transition flex items-center gap-1.5" title="Mostra o mapa de forma limpa, somente para leitura, sem overlays de edição">
+                <i class="fa-solid fa-eye"></i> Visualizar Mapa
+            </button>
+            
+            <button id="btnSaveProject" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium shadow transition flex items-center gap-1.5">
+                <i class="fa-solid fa-download"></i> Salvar
+            </button>
+
+            <button id="btnLoadProject" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium shadow transition flex items-center gap-1.5">
+                <i class="fa-solid fa-upload"></i> Carregar
+            </button>
+            <input type="file" id="fileLoadProject" accept=".json" class="hidden">
+
+            <button id="btnRestoreAutosave" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-600 rounded-lg font-medium shadow transition flex items-center gap-1.5" title="Restaura o último salvamento automático (feito no seu navegador)">
+                <i class="fa-solid fa-clock-rotate-left"></i> Restaurar Autosave
+            </button>
+
+            <button id="btnImportJSON" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg font-medium shadow transition flex items-center gap-1.5">
+                <i class="fa-solid fa-file-import"></i> Importar JSON
+            </button>
+            <input type="file" id="jsonInput" accept=".json" class="hidden">
+
+            <button id="btnExportPNG" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium shadow transition flex items-center gap-1.5" title="Exporta apenas o setor que está sendo exibido agora">
+                <i class="fa-solid fa-image"></i> Exportar Setor
+            </button>
+
+            <button id="btnExportWorld" class="px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-white rounded-lg font-medium shadow transition flex items-center gap-1.5" title="Junta todos os setores já criados em uma única imagem">
+                <i class="fa-solid fa-earth-americas"></i> Exportar Mundo
+            </button>
+        </div>
+    </header>
+
+    <!-- Área Principal -->
+    <main class="w-full max-w-7xl mx-auto flex-1 flex flex-col lg:flex-row gap-4 items-start min-w-0">
+        
+        <!-- Sidebar Esquerda -->
+        <aside class="w-full lg:w-80 flex flex-col gap-4 min-w-0">
+            
+            <!-- Paleta de Elementos -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg flex flex-col gap-3">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <h2 class="text-xs font-bold text-slate-100 flex items-center gap-2">
+                        🎨 Paleta de Elementos
+                    </h2>
+                    <span id="activeElementLabel" class="text-xs font-semibold text-emerald-400">Grama</span>
+                </div>
+
+                <div class="flex flex-col gap-3 overflow-y-auto max-h-[520px] pr-1">
+                    
+                    <!-- Terrenos Básicos & Especiais (1x1) -->
+                    <div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">🌱 Terrenos Básicos & Biomas (1x1)</span>
+                        <div class="grid grid-cols-2 gap-1.5">
+                            <button class="palette-btn active" data-id="grama" data-type="terrain">🟢 Grama</button>
+                            <button class="palette-btn" data-id="terra" data-type="terrain">🟤 Terra</button>
+                            <button class="palette-btn" data-id="agua" data-type="terrain">🔵 Água Animada</button>
+                            <button class="palette-btn" data-id="agua_congelada" data-type="terrain">🧊 Água Congelada</button>
+                            <button class="palette-btn" data-id="neve" data-type="terrain">❄️ Neve</button>
+                            <button class="palette-btn" data-id="areia_praia" data-type="terrain">🏖️ Areia Praia</button>
+                            <button class="palette-btn" data-id="areia" data-type="terrain">🟡 Areia Deserto</button>
+                            <button class="palette-btn" data-id="pedra" data-type="terrain">⚪ Pedra</button>
+                            <button class="palette-btn" data-id="taiga" data-type="terrain">🌲 Taiga</button>
+                            <button class="palette-btn" data-id="rocha" data-type="terrain">⚫ Rocha</button>
+                            <button class="palette-btn" data-id="manguezal" data-type="terrain">🌾 Manguezal</button>
+                            <button class="palette-btn" data-id="lama" data-type="terrain">💩 Lama</button>
+                            <button class="palette-btn col-span-2 text-orange-400 border-orange-500/30" data-id="lava" data-type="terrain">🔥 Lava Animada</button>
+                        </div>
+                        <button class="palette-btn border-rose-500/30 text-rose-400 hover:bg-rose-500/10 mt-1.5 justify-center" data-id="clear" data-type="clear">
+                            🧹 Limpar Célula
+                        </button>
+                    </div>
+
+                    <!-- Vegetação & Natureza -->
+                    <div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">🌲 Vegetação & Flora</span>
+                        <div class="grid grid-cols-2 gap-1.5">
+                            <button class="palette-btn" data-id="arvore" data-type="object" data-w="1" data-h="2">🌲 Árvore (1x2)</button>
+                            <button class="palette-btn" data-id="pinheiro" data-type="object" data-w="1" data-h="2">🌲 Pinheiro (1x2)</button>
+                            <button class="palette-btn" data-id="coqueiro" data-type="object" data-w="1" data-h="2">🌴 Coqueiro (1x2)</button>
+                            <button class="palette-btn" data-id="savana" data-type="object" data-w="1" data-h="2">🌾 Savana (1x2)</button>
+                            <button class="palette-btn" data-id="cacto" data-type="object" data-w="1" data-h="2">🌵 Cacto (1x2)</button>
+                            <!-- Arbustos por Bioma (1x1) -->
+                            <button class="palette-btn" data-id="arbusto_grama" data-type="object" data-w="1" data-h="1">☘️ Arbusto Grama</button>
+                            <button class="palette-btn" data-id="arbusto_neve" data-type="object" data-w="1" data-h="1">❄️ Arbusto Neve</button>
+                            <button class="palette-btn" data-id="arbusto_praia" data-type="object" data-w="1" data-h="1">🌾 Arbusto Praia</button>
+                            <button class="palette-btn" data-id="arbusto_mangue" data-type="object" data-w="1" data-h="1">🌿 Arbusto Mangue</button>
+                        </div>
+                    </div>
+
+                    <!-- Estruturas, Construções & Embarcações -->
+                    <div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">🏰 Construções & Embarcações</span>
+                        <div id="structuresContainer" class="grid grid-cols-2 gap-1.5">
+                            <button class="palette-btn" data-id="casa" data-type="object" data-w="2" data-h="2">🏠 Casa 1A (2x2)</button>
+                            <button class="palette-btn" data-id="casa_2andares" data-type="object" data-w="2" data-h="3">🏡 Casa 2A (2x3)</button>
+                            <button class="palette-btn" data-id="torre" data-type="object" data-w="2" data-h="3">🏰 Torre (2x3)</button>
+                            <button class="palette-btn" data-id="portao" data-type="object" data-w="2" data-h="2">🚪 Portão (2x2)</button>
+                            <button class="palette-btn" data-id="muralha" data-type="object" data-w="1" data-h="1">🧱 Muralha (1x1)</button>
+                            <button class="palette-btn text-rose-300 border-rose-500/30" data-id="vulcao" data-type="object" data-w="3" data-h="3">🌋 Vulcão (3x3)</button>
+                            <button class="palette-btn text-stone-300 border-stone-500/40" data-id="dungeon" data-type="dungeon" data-w="3" data-h="3">🕳️ Dungeon (3x3)</button>
+                            <!-- Barcos -->
+                            <button class="palette-btn" data-id="barco_pequeno" data-type="object" data-w="1" data-h="2">🚣 Barco P (1x2)</button>
+                            <button class="palette-btn" data-id="barco_medio" data-type="object" data-w="2" data-h="3">⛵ Barco M (2x3)</button>
+                            <button class="palette-btn col-span-2" data-id="barco_grande" data-type="object" data-w="3" data-h="4">🚢 Galeão Grande (3x4)</button>
+                            <button class="palette-btn col-span-2 border-amber-500/40 text-amber-300" data-id="castelo" data-type="object" data-w="4" data-h="4">
+                                🏰 Castelo Real (4x4)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Unidades Militares (1x1) -->
+                    <div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">⚔️ Unidades Militares (1x1)</span>
+                        <div class="grid grid-cols-2 gap-1.5">
+                            <button class="palette-btn" data-id="arqueiro" data-type="unit">🏹 Arqueiro</button>
+                            <button class="palette-btn" data-id="cavaleiro" data-type="unit">🛡️ Cavaleiro</button>
+                            <button class="palette-btn" data-id="piqueiro" data-type="unit">🗡️ Piqueiro</button>
+                            <button class="palette-btn" data-id="besteiro" data-type="unit">🎯 Besteiro</button>
+                        </div>
+                    </div>
+
+                    <!-- NPCs (1x1) -->
+                    <div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">👤 NPCs (1x1)</span>
+                        <div class="grid grid-cols-2 gap-1.5">
+                            <button class="palette-btn" data-id="npc_cidadao" data-type="npc">👤 Cidadão</button>
+                            <button class="palette-btn" data-id="npc_guarda" data-type="npc">🛡️ Guarda</button>
+                            <button class="palette-btn" data-id="npc_comerciante" data-type="npc">🧑‍💼 Comerciante</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Ferramentas de Edição -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg flex flex-col gap-3">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <h2 class="text-xs font-bold text-slate-100 flex items-center gap-1.5">🛠️ Ferramentas</h2>
+                    <span id="toolLabel" class="text-xs font-semibold text-sky-400">Pintar</span>
+                </div>
+
+                <div class="grid grid-cols-4 gap-1.5">
+                    <button class="tool-btn active" data-tool="paint" title="Pintar (pincel)">
+                        <i class="fa-solid fa-paintbrush"></i><span>Pintar</span>
+                    </button>
+                    <button class="tool-btn" data-tool="select" title="Selecionar e mover objetos">
+                        <i class="fa-solid fa-arrow-pointer"></i><span>Selec.</span>
+                    </button>
+                    <button class="tool-btn" data-tool="bucket" title="Balde de tinta (preenche área de terreno)">
+                        <i class="fa-solid fa-fill-drip"></i><span>Balde</span>
+                    </button>
+                    <button class="tool-btn" data-tool="eyedropper" title="Conta-gotas (captura terreno ou objeto)">
+                        <i class="fa-solid fa-eye-dropper"></i><span>Gotas</span>
+                    </button>
+                </div>
+
+                <div>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Pincel de Terreno</span>
+                    <div class="grid grid-cols-4 gap-1.5">
+                        <button class="brush-btn active" data-size="1">1x1</button>
+                        <button class="brush-btn" data-size="2">2x2</button>
+                        <button class="brush-btn" data-size="3">3x3</button>
+                        <button class="brush-btn" data-size="5">5x5</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-1.5">
+                    <button id="btnUndo" class="palette-btn justify-center" title="Desfazer (Ctrl+Z)" disabled>
+                        <i class="fa-solid fa-rotate-left"></i> Desfazer
+                    </button>
+                    <button id="btnRedo" class="palette-btn justify-center" title="Refazer (Ctrl+Y)" disabled>
+                        <i class="fa-solid fa-rotate-right"></i> Refazer
+                    </button>
+                </div>
+
+                <p class="text-[10px] text-slate-500 leading-snug">
+                    No modo <b class="text-slate-300">Selecionar</b>: clique escolhe, arraste move, <kbd class="text-slate-300">Del</kbd> apaga, <kbd class="text-slate-300">Ctrl+C</kbd>/<kbd class="text-slate-300">Ctrl+V</kbd> copia e cola.
+                </p>
+            </div>
+
+            <!-- Camadas -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg flex flex-col gap-3">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <h2 class="text-xs font-bold text-slate-100 flex items-center gap-1.5">🗂️ Camadas</h2>
+                </div>
+
+                <div class="flex flex-col gap-1.5">
+                    <div class="flex items-center justify-between gap-2 bg-slate-800/40 rounded-lg px-2 py-1.5">
+                        <span class="text-[11px] text-slate-300">🌍 Terreno</span>
+                        <div class="flex items-center gap-1">
+                            <button class="layer-vis-btn text-xs w-6 h-6 rounded flex items-center justify-center bg-slate-700 text-emerald-400" data-layer="terreno" title="Mostrar/ocultar camada"><i class="fa-solid fa-eye"></i></button>
+                            <button class="layer-lock-btn text-xs w-6 h-6 rounded flex items-center justify-center bg-slate-700 text-slate-400" data-layer="terreno" title="Bloquear/desbloquear edição"><i class="fa-solid fa-lock-open"></i></button>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between gap-2 bg-slate-800/40 rounded-lg px-2 py-1.5">
+                        <span class="text-[11px] text-slate-300">🌳 Decoração</span>
+                        <div class="flex items-center gap-1">
+                            <button class="layer-vis-btn text-xs w-6 h-6 rounded flex items-center justify-center bg-slate-700 text-emerald-400" data-layer="decoration" title="Mostrar/ocultar camada"><i class="fa-solid fa-eye"></i></button>
+                            <button class="layer-lock-btn text-xs w-6 h-6 rounded flex items-center justify-center bg-slate-700 text-slate-400" data-layer="decoration" title="Bloquear/desbloquear edição"><i class="fa-solid fa-lock-open"></i></button>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between gap-2 bg-slate-800/40 rounded-lg px-2 py-1.5">
+                        <span class="text-[11px] text-slate-300">🏠 Construções</span>
+                        <div class="flex items-center gap-1">
+                            <button class="layer-vis-btn text-xs w-6 h-6 rounded flex items-center justify-center bg-slate-700 text-emerald-400" data-layer="structures" title="Mostrar/ocultar camada"><i class="fa-solid fa-eye"></i></button>
+                            <button class="layer-lock-btn text-xs w-6 h-6 rounded flex items-center justify-center bg-slate-700 text-slate-400" data-layer="structures" title="Bloquear/desbloquear edição"><i class="fa-solid fa-lock-open"></i></button>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between gap-2 bg-slate-800/40 rounded-lg px-2 py-1.5">
+                        <span class="text-[11px] text-slate-300">⚔️ Unidades</span>
+                        <div class="flex items-center gap-1">
+                            <button class="layer-vis-btn text-xs w-6 h-6 rounded flex items-center justify-center bg-slate-700 text-emerald-400" data-layer="units" title="Mostrar/ocultar camada"><i class="fa-solid fa-eye"></i></button>
+                            <button class="layer-lock-btn text-xs w-6 h-6 rounded flex items-center justify-center bg-slate-700 text-slate-400" data-layer="units" title="Bloquear/desbloquear edição"><i class="fa-solid fa-lock-open"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <label class="flex items-center justify-between gap-2 pt-2 border-t border-slate-800 cursor-pointer">
+                    <span class="text-[11px] text-slate-300 flex items-center gap-1.5"><i class="fa-solid fa-shield-halved text-orange-400"></i> Mostrar Colisão</span>
+                    <input type="checkbox" id="chkShowCollision" class="w-4 h-4 accent-orange-500">
+                </label>
+
+                <div class="pt-2 border-t border-slate-800 flex flex-col gap-1.5">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Colisão do Objeto Selecionado</span>
+                    <select id="selectObjectCollision" class="w-full bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-200 px-2 py-1.5 disabled:opacity-40" disabled>
+                        <option value="andavel">🟢 Andável</option>
+                        <option value="bloqueado">🔴 Bloqueado</option>
+                        <option value="agua">🔵 Água</option>
+                        <option value="especial">🟠 Especial</option>
+                    </select>
+                    <span id="objectCollisionHint" class="text-[10px] text-slate-500">Selecione um objeto com a ferramenta "Selecionar".</span>
+                </div>
+            </div>
+
+            <!-- Propriedades da Unidade / NPC -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg flex flex-col gap-2">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <h2 class="text-xs font-bold text-slate-100 flex items-center gap-1.5">🪪 Propriedades da Unidade</h2>
+                </div>
+
+                <div id="unitPropertiesFields" class="flex flex-col gap-1.5" style="display: none;">
+                    <div>
+                        <span class="text-[10px] text-slate-400 block mb-1">Nome</span>
+                        <input type="text" id="inputUnitName" maxlength="40" class="w-full bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-200 px-2 py-1.5 disabled:opacity-40" placeholder="Ex: Capitão Aldric">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-1.5">
+                        <div>
+                            <span class="text-[10px] text-slate-400 block mb-1">Vida Atual (HP)</span>
+                            <input type="number" id="inputUnitHp" class="w-full bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-200 px-2 py-1.5 disabled:opacity-40" min="0" step="1">
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-400 block mb-1">Vida Máxima</span>
+                            <input type="number" id="inputUnitMaxHp" class="w-full bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-200 px-2 py-1.5 disabled:opacity-40" min="0" step="1">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-1.5">
+                        <div>
+                            <span class="text-[10px] text-slate-400 block mb-1">Ataque</span>
+                            <input type="number" id="inputUnitAttack" class="w-full bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-200 px-2 py-1.5 disabled:opacity-40" min="0" step="1">
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-400 block mb-1">Defesa</span>
+                            <input type="number" id="inputUnitDefense" class="w-full bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-200 px-2 py-1.5 disabled:opacity-40" min="0" step="1">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-1.5">
+                        <div>
+                            <span class="text-[10px] text-slate-400 block mb-1">Alcance</span>
+                            <input type="number" id="inputUnitRange" class="w-full bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-200 px-2 py-1.5 disabled:opacity-40" min="0" step="1">
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-400 block mb-1">Facção</span>
+                            <select id="selectUnitFaction" class="w-full bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-200 px-2 py-1.5 disabled:opacity-40">
+                                <option value="aliado">🤝 Aliado</option>
+                                <option value="inimigo">⚔️ Inimigo</option>
+                                <option value="neutro">😐 Neutro</option>
+                                <option value="comerciante">💰 Comerciante</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <span id="unitPropertiesHint" class="text-[10px] text-slate-500">Selecione uma unidade ou NPC com a ferramenta "Selecionar".</span>
+            </div>
+
+            <!-- Navegação do Mundo -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg flex flex-col gap-3">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <h2 class="text-xs font-bold text-slate-100 flex items-center gap-1.5">🧭 Navegação do Mundo</h2>
+                    <span class="text-xs font-mono text-sky-400 font-bold">Setor (<span id="sectorX">0</span>, <span id="sectorY">0</span>)</span>
+                </div>
+
+                <div class="flex items-center justify-between gap-2">
+                    <div class="grid grid-cols-3 gap-1 w-24 h-24">
+                        <div></div>
+                        <button class="nav-btn" id="btnNavUp">↑</button>
+                        <div></div>
+                        <button class="nav-btn" id="btnNavLeft">←</button>
+                        <button class="nav-btn bg-slate-800 text-slate-300 text-[10px]" id="btnNavCenter">0,0</button>
+                        <button class="nav-btn" id="btnNavRight">→</button>
+                        <div></div>
+                        <button class="nav-btn" id="btnNavDown">↓</button>
+                        <div></div>
+                    </div>
+
+                    <div class="flex flex-col items-center">
+                        <span class="text-[10px] text-slate-400 mb-1">Minimapa 5x5 (clicável)</span>
+                        <div id="minimap" class="w-28 h-28 bg-slate-950 border border-slate-800 rounded grid grid-cols-5 gap-0.5 p-1"></div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-1.5 pt-2 border-t border-slate-800">
+                    <span class="text-[10px] text-slate-400 whitespace-nowrap">Ir para:</span>
+                    <input type="number" id="inputGoToX" placeholder="X" class="w-full min-w-0 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-200 px-2 py-1.5 text-center" step="1">
+                    <input type="number" id="inputGoToY" placeholder="Y" class="w-full min-w-0 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-200 px-2 py-1.5 text-center" step="1">
+                    <button id="btnGoToSector" class="px-2.5 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-semibold transition whitespace-nowrap">Ir</button>
+                </div>
+            </div>
+
+            <!-- Estatísticas do Mundo -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg flex flex-col gap-2">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <h2 class="text-xs font-bold text-slate-100 flex items-center gap-1.5">📊 Estatísticas do Mundo</h2>
+                </div>
+
+                <div class="flex items-center justify-between text-[11px] text-slate-300">
+                    <span>🗺️ Setores criados</span>
+                    <span id="statSectors" class="font-mono font-semibold text-sky-400">0</span>
+                </div>
+                <div class="flex items-center justify-between text-[11px] text-slate-300">
+                    <span>🌍 Células de terreno</span>
+                    <span id="statTerrainCells" class="font-mono font-semibold text-emerald-400">0</span>
+                </div>
+                <div class="flex items-center justify-between text-[11px] text-slate-300">
+                    <span>📦 Objetos totais</span>
+                    <span id="statObjects" class="font-mono font-semibold text-amber-400">0</span>
+                </div>
+
+                <div class="pl-3 flex flex-col gap-1 border-l border-slate-800 ml-1">
+                    <div class="flex items-center justify-between text-[10px] text-slate-400">
+                        <span>🌳 Decoração</span>
+                        <span id="statDecoration" class="font-mono">0</span>
+                    </div>
+                    <div class="flex items-center justify-between text-[10px] text-slate-400">
+                        <span>🏠 Construções</span>
+                        <span id="statStructures" class="font-mono">0</span>
+                    </div>
+                    <div class="flex items-center justify-between text-[10px] text-slate-400">
+                        <span>⚔️ Unidades</span>
+                        <span id="statUnits" class="font-mono">0</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between text-[11px] text-slate-300 pt-2 border-t border-slate-800">
+                    <span>💾 Último autosave</span>
+                    <span id="statLastAutosave" class="font-mono font-semibold text-slate-400">Nunca</span>
+                </div>
+            </div>
+
+            <!-- Geração Procedural -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg flex flex-col gap-2">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <h2 class="text-xs font-bold text-slate-100 flex items-center gap-1.5">🌱 Geração Procedural</h2>
+                </div>
+
+                <span class="text-[10px] text-slate-400">Seed (mesma seed = mesmo resultado)</span>
+                <div class="flex items-center gap-1.5">
+                    <input type="text" id="inputSeed" placeholder="ex: floresta123" class="w-full min-w-0 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-200 px-2 py-1.5" value="mundo-1">
+                    <button id="btnRandomSeed" class="w-8 h-8 flex-shrink-0 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 flex items-center justify-center" title="Gerar seed aleatória">🎲</button>
+                </div>
+
+                <button id="btnGenerateWorld" class="w-full py-2 mt-1 bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg text-xs font-semibold transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-mountain-sun"></i> Gerar Terreno do Setor Atual
+                </button>
+
+                <p class="text-[10px] text-slate-500 leading-snug pt-1">
+                    Gera biomas (água, floresta, deserto, neve, pântano etc.) só no setor que está sendo exibido agora — os outros setores não são afetados. A ação vai pro histórico, então <b class="text-slate-300">Ctrl+Z</b> desfaz normalmente.
+                </p>
+            </div>
+
+        </aside>
+
+        <!-- Canvas Central -->
+        <section class="flex-1 flex flex-col items-center justify-start gap-4 w-full min-w-0">
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-2 sm:p-4 shadow-2xl flex flex-col items-center gap-4 w-full min-w-0">
+                <div class="relative bg-slate-950 p-2 rounded-xl border border-slate-800 shadow-inner max-w-full overflow-x-auto">
+                    <div id="canvasViewport" style="width: 576px; height: 576px; overflow: auto;" class="rounded">
+                        <div id="canvasScaler" style="width: 576px; height: 576px;">
+                            <canvas id="mapCanvas" width="576" height="576" class="cursor-crosshair rounded bg-slate-950" style="image-rendering: pixelated; transform-origin: top left;"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-center gap-2">
+                    <button id="btnZoomOut" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 flex items-center justify-center text-sm font-bold" title="Diminuir zoom">−</button>
+                    <button id="btnZoomReset" class="px-3 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-mono text-xs" title="Redefinir zoom para 100%">
+                        <span id="zoomLabel">100%</span>
+                    </button>
+                    <button id="btnZoomIn" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 flex items-center justify-center text-sm font-bold" title="Aumentar zoom">+</button>
+                    <span class="text-[10px] text-slate-500 ml-1 hidden sm:inline">Scroll do mouse dá zoom · <kbd class="text-slate-300">Espaço</kbd> + arrastar (ou botão do meio) navega pelo mapa</span>
+                </div>
+
+                <!-- Painel de Interação (Modo de Teste) — informativo, temporário -->
+                <div id="interactionPanel" class="w-full bg-slate-800 border border-cyan-700/50 rounded-lg px-3 py-2 text-xs text-slate-200" style="display: none;">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="font-bold text-cyan-400 flex items-center gap-1.5">🗨️ Interação</span>
+                        <span class="text-[10px] text-slate-500"><kbd class="text-slate-300">Esc</kbd> para fechar</span>
+                    </div>
+                    <div id="interactionPanelContent" class="text-slate-300"></div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 w-full">
+                    <button id="btnClearSector" class="w-full py-2 bg-rose-900/40 hover:bg-rose-800/60 text-rose-300 border border-rose-700/50 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-trash-can"></i> Limpar Setor Atual
+                    </button>
+                    <button id="btnResetWorld" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-rotate-left"></i> Resetar Todo o Mundo
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Script Principal da Engine -->
+    <script>
+        const GRID_SIZE = 12;
+        const canvas = document.getElementById('mapCanvas');
+        const ctx = canvas.getContext('2d');
+        const CELL_SIZE = canvas.width / GRID_SIZE; // 48px
+
+        let currentSectorX = 0;
+        let currentSectorY = 0;
+        let worldSectors = {};
+
+        const imageCache = {};
+
+        // Som Synthesizer
+        let soundEnabled = true;
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playBeep(freq = 400) {
+            if (!soundEnabled) return;
+            try {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.08);
+            } catch(e){}
+        }
+
+        let selectedElement = { id: 'grama', type: 'terrain', w: 1, h: 1, label: 'Grama' };
+
+        // -------------------------------------------------------------
+        // MODELO DE DADOS (v2) — Fundação
+        // -------------------------------------------------------------
+        // Cada setor agora é: { terrain: string[GRID_SIZE][GRID_SIZE], objects: Entity[] }
+        // Entity: { uid, id, type, x, y, w, h, layer, rotation, collisionType, customImg, [name, hp, maxHp, attack, defense, range, faction] }
+        // x,y,w,h em UNIDADES DE GRADE (não pixels) — objeto grande ocupa [x, x+w) x [y, y+h) de verdade.
+        // collisionType é uma das 4 categorias da Parte 2: 'andavel' | 'bloqueado' | 'agua' | 'especial'.
+        // Os campos de atributo (name/hp/maxHp/attack/defense/range/faction) existem apenas
+        // em entidades type === 'unit' ou type === 'npc'. Ainda não há interface para editá-los
+        // nem para colocar NPCs — isso é só a preparação do modelo de dados.
+
+        // Metadados de layer/colisão por id — usados como padrão ao criar uma entidade.
+        const OBJECT_LAYER_MAP = {
+            arvore: 'decoration', pinheiro: 'decoration', coqueiro: 'decoration', savana: 'decoration', cacto: 'decoration',
+            arbusto_grama: 'decoration', arbusto_neve: 'decoration', arbusto_praia: 'decoration', arbusto_mangue: 'decoration',
+            casa: 'structures', casa_2andares: 'structures', torre: 'structures', portao: 'structures',
+            muralha: 'structures', vulcao: 'structures', castelo: 'structures', dungeon: 'structures',
+            barco_pequeno: 'structures', barco_medio: 'structures', barco_grande: 'structures',
+            arqueiro: 'units', cavaleiro: 'units', piqueiro: 'units', besteiro: 'units',
+            // NPCs (ainda sem botão na paleta) — usam a mesma camada "units" das unidades militares.
+            npc_cidadao: 'units', npc_guarda: 'units', npc_comerciante: 'units'
+        };
+        // Categoria de colisão padrão por id de objeto (as 4 categorias do sistema de colisão).
+        const OBJECT_COLLISION_MAP = {
+            arvore: 'bloqueado', pinheiro: 'bloqueado', coqueiro: 'bloqueado', savana: 'andavel', cacto: 'bloqueado',
+            arbusto_grama: 'andavel', arbusto_neve: 'andavel', arbusto_praia: 'andavel', arbusto_mangue: 'andavel',
+            casa: 'bloqueado', casa_2andares: 'bloqueado', torre: 'bloqueado', portao: 'bloqueado',
+            muralha: 'bloqueado', vulcao: 'especial', castelo: 'bloqueado', dungeon: 'bloqueado',
+            barco_pequeno: 'andavel', barco_medio: 'andavel', barco_grande: 'andavel',
+            arqueiro: 'bloqueado', cavaleiro: 'bloqueado', piqueiro: 'bloqueado', besteiro: 'bloqueado',
+            npc_cidadao: 'andavel', npc_guarda: 'bloqueado', npc_comerciante: 'andavel'
+        };
+        // Categoria de colisão padrão por TERRENO (célula sem objeto por cima).
+        const TERRAIN_COLLISION_MAP = {
+            grama: 'andavel', terra: 'andavel', pedra: 'andavel', taiga: 'andavel',
+            areia: 'andavel', areia_praia: 'andavel', neve: 'andavel', savana: 'andavel',
+            manguezal: 'andavel', lama: 'andavel',
+            agua: 'agua', agua_congelada: 'agua',
+            rocha: 'bloqueado',
+            lava: 'especial'
+        };
+        const VALID_COLLISION_TYPES = ['andavel', 'bloqueado', 'agua', 'especial'];
+
+        // Atributos padrão por id de unidade/NPC. Só existem para preencher automaticamente
+        // ao criar a entidade — nenhuma interface usa isso ainda.
+        const UNIT_STATS_DEFAULTS = {
+            arqueiro: { name: 'Arqueiro', hp: 8, maxHp: 8, attack: 3, defense: 1, range: 4, faction: 'aliado' },
+            cavaleiro: { name: 'Cavaleiro', hp: 14, maxHp: 14, attack: 4, defense: 4, range: 1, faction: 'aliado' },
+            piqueiro: { name: 'Piqueiro', hp: 10, maxHp: 10, attack: 3, defense: 2, range: 2, faction: 'aliado' },
+            besteiro: { name: 'Besteiro', hp: 8, maxHp: 8, attack: 4, defense: 1, range: 3, faction: 'aliado' },
+            npc_cidadao: { name: 'Cidadão', hp: 5, maxHp: 5, attack: 0, defense: 0, range: 1, faction: 'neutro' },
+            npc_guarda: { name: 'Guarda', hp: 12, maxHp: 12, attack: 3, defense: 3, range: 1, faction: 'neutro' },
+            npc_comerciante: { name: 'Comerciante', hp: 6, maxHp: 6, attack: 0, defense: 1, range: 1, faction: 'neutro' }
+        };
+        // Padrão genérico para um id de unit/npc que não está no mapa acima (ex.: criado só pelo tipo).
+        const GENERIC_UNIT_STATS_DEFAULT = { name: '', hp: 10, maxHp: 10, attack: 1, defense: 1, range: 1, faction: 'neutro' };
+
+        function defaultLayerFor(id, type) {
+            return OBJECT_LAYER_MAP[id] || (type === 'unit' || type === 'npc' ? 'units' : 'structures');
+        }
+        function defaultCollisionFor(id, type) {
+            if (id in OBJECT_COLLISION_MAP) return OBJECT_COLLISION_MAP[id];
+            return 'bloqueado'; // padrão seguro para ids desconhecidos (ex.: estrutura customizada)
+        }
+        // Retorna os atributos padrão (name/hp/maxHp/attack/defense/range/faction) para uma
+        // entidade type === 'unit' ou 'npc'. Para qualquer outro tipo, retorna null (esses
+        // campos simplesmente não existem em objetos de terreno/decoração/estrutura).
+        function defaultStatsFor(id, type) {
+            if (type !== 'unit' && type !== 'npc') return null;
+            const preset = UNIT_STATS_DEFAULTS[id];
+            return preset ? { ...preset } : { ...GENERIC_UNIT_STATS_DEFAULT };
+        }
+        // Aceita tanto o valor novo (string de 4 categorias) quanto o booleano usado
+        // temporariamente na Parte 1 (true = bloqueado, false = andável), para não
+        // quebrar projetos salvos enquanto o editor ainda estava sendo construído.
+        function normalizeCollisionValue(value, id, type) {
+            if (typeof value === 'boolean') return value ? 'bloqueado' : 'andavel';
+            if (VALID_COLLISION_TYPES.includes(value)) return value;
+            return defaultCollisionFor(id, type);
+        }
+
+        // Retorna a categoria de colisão EFETIVA de uma célula: o objeto que a ocupa
+        // (se houver) tem prioridade sobre o terreno por baixo dele.
+        function getCellCollision(sector, col, row) {
+            const obj = getObjectAt(sector, col, row);
+            if (obj) return obj.collisionType;
+            return TERRAIN_COLLISION_MAP[sector.terrain[row][col]] || 'andavel';
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // Dungeon IDs — fonte única de verdade
+        // ─────────────────────────────────────────────────────────────
+        // Um dungeonId está reservado se pertence a uma Dungeon do mundo ou a um
+        // interior que já foi salvo no localStorage do editor de dungeons.
+        // Assim, apagar uma estrutura externa não libera seu ID enquanto o interior
+        // salvo ainda existir.
+        const DUNGEON_EDITOR_STORAGE_PREFIX = 'rpgDungeonEditor_v1_';
+
+        function getSavedDungeonIdsFromStorage() {
+            const ids = new Set();
+            try {
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (!key || !key.startsWith(DUNGEON_EDITOR_STORAGE_PREFIX)) continue;
+                    const id = key.slice(DUNGEON_EDITOR_STORAGE_PREFIX.length);
+                    if (id && id !== 'index') ids.add(id);
+                }
+            } catch (e) {
+                // Se o navegador bloquear localStorage, o criador continua utilizável.
+            }
+            return ids;
+        }
+
+        function collectReservedDungeonIds() {
+            const reserved = new Set();
+            for (const key in worldSectors) {
+                const sector = worldSectors[key];
+                if (!sector || !Array.isArray(sector.objects)) continue;
+                for (const o of sector.objects) {
+                    if ((o.type === 'dungeon' || o.id === 'dungeon') &&
+                        typeof o.dungeonId === 'string' && o.dungeonId.trim()) {
+                        reserved.add(o.dungeonId);
+                    }
+                }
+            }
+            for (const id of getSavedDungeonIdsFromStorage()) reserved.add(id);
+            return reserved;
+        }
+
+        // Gera um identificador no formato dungeon_NNN que não colide com nenhum ID
+        // existente no mundo nem com um interior salvo no navegador.
+        function generateDungeonId() {
+            const reserved = collectReservedDungeonIds();
+            let max = 0;
+            for (const id of reserved) {
+                const m = typeof id === 'string' && id.match(/^dungeon_(\d+)$/);
+                if (m) max = Math.max(max, parseInt(m[1], 10));
+            }
+            let next = max + 1;
+            let candidate = 'dungeon_' + String(next).padStart(3, '0');
+            while (reserved.has(candidate)) {
+                next++;
+                candidate = 'dungeon_' + String(next).padStart(3, '0');
+            }
+            return candidate;
+        }
+
+        // Segunda passada depois de carregar TODOS os setores. Preserva IDs existentes
+        // (inclusive IDs personalizados), corrige apenas valores ausentes/vazios e
+        // reatribui novos IDs às ocorrências duplicadas posteriores.
+        function assignMissingDungeonIds() {
+            const seen = new Set();
+            const pending = [];
+
+            for (const key in worldSectors) {
+                const sector = worldSectors[key];
+                if (!sector || !Array.isArray(sector.objects)) continue;
+                for (const o of sector.objects) {
+                    if (o.type !== 'dungeon' && o.id !== 'dungeon') continue;
+                    // Em projetos antigos, a estrutura podia estar marcada como object.
+                    if (o.id === 'dungeon') o.type = 'dungeon';
+                    const id = o.dungeonId;
+                    if (typeof id !== 'string' || !id.trim() || seen.has(id)) {
+                        o.dungeonId = null;
+                        pending.push(o);
+                    } else {
+                        seen.add(id);
+                    }
+                }
+            }
+
+            // Inclui os interiores salvos, sem desassociar IDs válidos já presentes.
+            const reserved = collectReservedDungeonIds();
+            for (const id of reserved) seen.add(id);
+
+            let max = 0;
+            for (const id of reserved) {
+                const m = typeof id === 'string' && id.match(/^dungeon_(\d+)$/);
+                if (m) max = Math.max(max, parseInt(m[1], 10));
+            }
+
+            for (const o of pending) {
+                let candidate;
+                do {
+                    max++;
+                    candidate = 'dungeon_' + String(max).padStart(3, '0');
+                } while (reserved.has(candidate) || seen.has(candidate));
+                o.dungeonId = candidate;
+                reserved.add(candidate);
+                seen.add(candidate);
+            }
+        }
+
+        let entityCounter = 0;
+        function generateUid() {
+            entityCounter += 1;
+            return 'e' + Date.now().toString(36) + entityCounter.toString(36);
+        }
+
+        function createEmptySector() {
+            return {
+                terrain: Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill('grama')),
+                objects: []
+            };
+        }
+
+        // Converte um setor no formato ANTIGO (matriz de {terrain,item}) para o modelo novo.
+        function migrateOldSector(oldMatrix) {
+            const sector = createEmptySector();
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const cell = (oldMatrix[r] && oldMatrix[r][c]) || {};
+                    sector.terrain[r][c] = cell.terrain || 'grama';
+                    if (cell.item) {
+                        const it = cell.item;
+                        const entityType = it.customImg ? 'custom' :
+                            ((it.type === 'dungeon' || it.id === 'dungeon') ? 'dungeon' :
+                            (OBJECT_LAYER_MAP[it.id] === 'units' ? 'unit' : 'object'));
+                        const entity = {
+                            uid: generateUid(),
+                            id: it.id,
+                            type: entityType,
+                            x: c, y: r,
+                            w: it.w || 1, h: it.h || 1,
+                            layer: defaultLayerFor(it.id, entityType),
+                            rotation: 0,
+                            collisionType: defaultCollisionFor(it.id, entityType),
+                            customImg: it.customImg || null
+                        };
+                        if (entity.type === 'dungeon') {
+                            entity.dungeonId = (typeof it.dungeonId === 'string' && it.dungeonId.trim())
+                                ? it.dungeonId : null;
+                        }
+                        const stats = defaultStatsFor(it.id, entityType);
+                        if (stats) Object.assign(entity, stats);
+                        sector.objects.push(entity);
+                    }
+                }
+            }
+            return sector;
+        }
+
+        // Garante que um setor carregado (de qualquer origem) esteja no formato novo e completo.
+        function normalizeSector(raw) {
+            if (!raw) return createEmptySector();
+            if (Array.isArray(raw)) return migrateOldSector(raw); // formato antigo
+            const sector = createEmptySector();
+            if (Array.isArray(raw.terrain)) {
+                for (let r = 0; r < GRID_SIZE; r++) {
+                    for (let c = 0; c < GRID_SIZE; c++) {
+                        sector.terrain[r][c] = (raw.terrain[r] && raw.terrain[r][c]) || 'grama';
+                    }
+                }
+            }
+            if (Array.isArray(raw.objects)) {
+                sector.objects = raw.objects.map(o => {
+                    const entity = {
+                        uid: o.uid || generateUid(),
+                        id: o.id,
+                        type: o.type || 'object',
+                        x: o.x || 0, y: o.y || 0,
+                        w: o.w || 1, h: o.h || 1,
+                        layer: o.layer || defaultLayerFor(o.id, o.type),
+                        rotation: o.rotation || 0,
+                        collisionType: normalizeCollisionValue(o.collisionType !== undefined ? o.collisionType : o.collision, o.id, o.type),
+                        customImg: o.customImg || null
+                    };
+                    // Dungeon: preserva o ID já existente e deixa ausências para a segunda
+                    // passada (assignMissingDungeonIds), depois que todos os setores forem carregados.
+                    if (entity.type === 'dungeon' || entity.id === 'dungeon') {
+                        // Corrige projetos antigos que tinham id=dungeon mas type=object.
+                        entity.type = 'dungeon';
+                        entity.dungeonId = (typeof o.dungeonId === 'string' && o.dungeonId.trim())
+                            ? o.dungeonId : null;
+                    }
+                    // Unidades/NPCs: preserva os atributos do arquivo se existirem; preenche com
+                    // o padrão qualquer campo que esteja faltando (arquivos antigos não têm nenhum).
+                    const defaults = defaultStatsFor(entity.id, entity.type);
+                    if (defaults) {
+                        entity.name = (o.name !== undefined && o.name !== null) ? o.name : defaults.name;
+                        entity.hp = (typeof o.hp === 'number') ? o.hp : defaults.hp;
+                        entity.maxHp = (typeof o.maxHp === 'number') ? o.maxHp : defaults.maxHp;
+                        entity.attack = (typeof o.attack === 'number') ? o.attack : defaults.attack;
+                        entity.defense = (typeof o.defense === 'number') ? o.defense : defaults.defense;
+                        entity.range = (typeof o.range === 'number') ? o.range : defaults.range;
+                        entity.faction = (o.faction !== undefined && o.faction !== null) ? o.faction : defaults.faction;
+                    }
+                    return entity;
+                });
+            }
+            return sector;
+        }
+
+        function getSectorKey(x, y) { return `${x},${y}`; }
+
+        function getOrCreateSector(x, y) {
+            const key = getSectorKey(x, y);
+            if (!worldSectors[key]) {
+                worldSectors[key] = createEmptySector();
+                updateWorldStats(); // "Setores criados" precisa refletir a criação imediatamente
+            }
+            return worldSectors[key];
+        }
+
+        // Leitura SEM efeito colateral: devolve o setor se ele existe; se não existe, devolve um
+        // setor vazio compartilhado (somente-leitura) e NUNCA grava nada em worldSectors.
+        // Use em renderização/prévia/consulta. Fluxos de edição continuam usando getOrCreateSector().
+        const EMPTY_SECTOR_FOR_READS = createEmptySector();
+        EMPTY_SECTOR_FOR_READS.terrain.forEach(row => Object.freeze(row));
+        Object.freeze(EMPTY_SECTOR_FOR_READS.terrain);
+        Object.freeze(EMPTY_SECTOR_FOR_READS.objects);
+        Object.freeze(EMPTY_SECTOR_FOR_READS);
+        function peekSector(x, y) {
+            return worldSectors[getSectorKey(x, y)] || EMPTY_SECTOR_FOR_READS;
+        }
+
+        // Retorna a entidade que ocupa a célula (col,row), ou null.
+        function getObjectAt(sector, col, row) {
+            for (let i = sector.objects.length - 1; i >= 0; i--) {
+                const o = sector.objects[i];
+                if (col >= o.x && col < o.x + o.w && row >= o.y && row < o.y + o.h) return o;
+            }
+            return null;
+        }
+
+        // Verifica se a área [x, x+w) x [y, y+h) está livre (dentro da grade e sem sobreposição).
+        function isAreaFree(sector, x, y, w, h, excludeUid) {
+            if (x < 0 || y < 0 || x + w > GRID_SIZE || y + h > GRID_SIZE) return false;
+            for (const o of sector.objects) {
+                if (o.uid === excludeUid) continue;
+                const overlap = x < o.x + o.w && x + w > o.x && y < o.y + o.h && y + h > o.y;
+                if (overlap) return false;
+            }
+            return true;
+        }
+
+        // -------------------------------------------------------------
+        // HISTÓRICO (Undo/Redo) — uma entrada por AÇÃO (traço/clique), não por célula
+        // -------------------------------------------------------------
+        // Estratégia: snapshot completo do setor antes/depois. O setor é pequeno
+        // (12x12 + poucos objetos), então clonar é muito mais simples e seguro do
+        // que tentar manter um diff incremental, e o custo é desprezível.
+        const HISTORY_LIMIT = 40;
+        let undoStack = [];
+        let redoStack = [];
+        let actionSnapshot = null; // { sectorKey, before, existedBefore } enquanto uma ação está em andamento
+
+        function cloneSector(sector) {
+            return {
+                terrain: sector.terrain.map(row => row.slice()),
+                objects: sector.objects.map(o => ({ ...o }))
+            };
+        }
+
+        function beginHistoryAction() {
+            const key = getSectorKey(currentSectorX, currentSectorY);
+            const existedBefore = Object.prototype.hasOwnProperty.call(worldSectors, key);
+            const sector = getOrCreateSector(currentSectorX, currentSectorY);
+            actionSnapshot = { sectorKey: key, before: cloneSector(sector), existedBefore };
+        }
+
+        function commitHistoryAction() {
+            if (!actionSnapshot) return;
+            const sector = worldSectors[actionSnapshot.sectorKey];
+            const after = cloneSector(sector);
+            if (JSON.stringify(actionSnapshot.before) !== JSON.stringify(after)) {
+                undoStack.push({
+                    sectorKey: actionSnapshot.sectorKey,
+                    before: actionSnapshot.before,
+                    after,
+                    createdSector: !actionSnapshot.existedBefore
+                });
+                if (undoStack.length > HISTORY_LIMIT) undoStack.shift();
+                redoStack = [];
+                updateHistoryButtons();
+                updateWorldStats();
+                scheduleAutosave();
+            }
+            actionSnapshot = null;
+        }
+
+        function goToSectorKey(key) {
+            const [sx, sy] = key.split(',').map(Number);
+            currentSectorX = sx; currentSectorY = sy;
+            updateSectorUI();
+        }
+
+        function undoAction() {
+            if (undoStack.length === 0) { playBeep(150); return; }
+            const entry = undoStack.pop();
+            if (entry.sectors) {
+                // Entrada multi-setor (ex.: "Resetar Mundo") — restaura todos os setores de uma vez, num único Undo.
+                for (const key in entry.sectors) {
+                    worldSectors[key] = cloneSector(entry.sectors[key].before);
+                }
+            } else {
+                if (entry.createdSector) {
+                    delete worldSectors[entry.sectorKey];
+                } else {
+                    worldSectors[entry.sectorKey] = cloneSector(entry.before);
+                }
+                goToSectorKey(entry.sectorKey);
+            }
+            redoStack.push(entry);
+            updateHistoryButtons();
+            updateWorldStats();
+            updateSelectionUI();
+            scheduleAutosave();
+            playBeep(300);
+        }
+
+        function redoAction() {
+            if (redoStack.length === 0) { playBeep(150); return; }
+            const entry = redoStack.pop();
+            if (entry.resetWorld) {
+                // "Resetar Mundo": o estado "depois" é o mundo realmente vazio (sem
+                // nenhuma chave em worldSectors), igual ao que o botão faz — não
+                // recriar cada setor antigo como um setor vazio.
+                worldSectors = {};
+                currentSectorX = 0;
+                currentSectorY = 0;
+                updateSectorUI();
+            } else if (entry.sectors) {
+                // Entrada multi-setor genérica — reaplica o "depois" de cada setor envolvido.
+                for (const key in entry.sectors) {
+                    worldSectors[key] = cloneSector(entry.sectors[key].after);
+                }
+            } else {
+                worldSectors[entry.sectorKey] = cloneSector(entry.after);
+                goToSectorKey(entry.sectorKey);
+            }
+            undoStack.push(entry);
+            updateHistoryButtons();
+            updateWorldStats();
+            updateSelectionUI();
+            scheduleAutosave();
+            playBeep(300);
+        }
+
+        function updateHistoryButtons() {
+            const undoBtn = document.getElementById('btnUndo');
+            const redoBtn = document.getElementById('btnRedo');
+            if (undoBtn) undoBtn.disabled = undoStack.length === 0;
+            if (redoBtn) redoBtn.disabled = redoStack.length === 0;
+        }
+
+        // -------------------------------------------------------------
+        // AUTOSAVE — salva automaticamente no localStorage (debounced) e
+        // permite restaurar o último salvamento. Não é síncrono a cada
+        // tecla/movimento: espera um pequeno intervalo de inatividade
+        // depois de uma ação real (a mesma que gera entrada no histórico).
+        // -------------------------------------------------------------
+        const AUTOSAVE_KEY = 'rpgMapEditor_autosave_v1';
+        const AUTOSAVE_DEBOUNCE_MS = 2000;
+        let autosaveTimer = null;
+
+        function scheduleAutosave() {
+            if (autosaveTimer) clearTimeout(autosaveTimer);
+            autosaveTimer = setTimeout(performAutosave, AUTOSAVE_DEBOUNCE_MS);
+        }
+
+        function performAutosave() {
+            try {
+                const payload = { formatVersion: 2, sectors: worldSectors, savedAt: Date.now() };
+                localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(payload));
+                updateAutosaveLabel(payload.savedAt);
+            } catch (err) {
+                // Provavelmente localStorage cheio (ex.: muitas imagens customizadas). Não interrompe o uso do editor.
+                console.warn('Autosave falhou:', err);
+            }
+        }
+
+        function loadAutosavePayload() {
+            try {
+                const raw = localStorage.getItem(AUTOSAVE_KEY);
+                return raw ? JSON.parse(raw) : null;
+            } catch (err) {
+                console.warn('Não foi possível ler o autosave salvo:', err);
+                return null;
+            }
+        }
+
+        // silent = true quando chamado automaticamente ao carregar a página (sem beep/alert)
+        function restoreFromAutosave(silent) {
+            const payload = loadAutosavePayload();
+            if (!payload || !payload.sectors) {
+                if (!silent) alert('Nenhum autosave encontrado.');
+                return false;
+            }
+            const migrated = {};
+            for (const key in payload.sectors) migrated[key] = normalizeSector(payload.sectors[key]);
+            worldSectors = migrated;
+            assignMissingDungeonIds(); // 2ª passada: todos os setores já estão carregados
+            currentSectorX = 0; currentSectorY = 0;
+            undoStack = []; redoStack = []; // histórico não atravessa uma restauração
+            updateHistoryButtons();
+            updateSectorUI();
+            updateAutosaveLabel(payload.savedAt);
+            updateWorldStats();
+            if (!silent) playBeep(700);
+            return true;
+        }
+
+        function updateAutosaveLabel(timestamp) {
+            const el = document.getElementById('statLastAutosave');
+            if (!el) return;
+            el.innerText = timestamp ? new Date(timestamp).toLocaleTimeString('pt-BR') : 'Nunca';
+        }
+
+        // -------------------------------------------------------------
+        // ESTATÍSTICAS DO MUNDO — recalculadas sempre que os dados mudam de verdade
+        // -------------------------------------------------------------
+        function updateWorldStats() {
+            const sectorKeys = Object.keys(worldSectors);
+            let terrainCells = 0, totalObjects = 0, decoCount = 0, structCount = 0, unitCount = 0;
+
+            for (const key of sectorKeys) {
+                const sector = worldSectors[key];
+                terrainCells += GRID_SIZE * GRID_SIZE;
+                totalObjects += sector.objects.length;
+                for (const obj of sector.objects) {
+                    if (obj.layer === 'decoration') decoCount++;
+                    else if (obj.layer === 'structures') structCount++;
+                    else if (obj.layer === 'units') unitCount++;
+                }
+            }
+
+            const set = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
+            set('statSectors', sectorKeys.length);
+            set('statTerrainCells', terrainCells);
+            set('statObjects', totalObjects);
+            set('statDecoration', decoCount);
+            set('statStructures', structCount);
+            set('statUnits', unitCount);
+        }
+
+        // -------------------------------------------------------------
+        // MODO DE TESTE (infraestrutura visual — Parte 3D-1)
+        // -------------------------------------------------------------
+        // Quando true, o mapa fica somente-leitura: nenhuma ferramenta de edição
+        // pode alterar terreno, objetos ou propriedades. Navegação (setores, zoom,
+        // pan) continua funcionando normalmente, pois não altera o mapa.
+        let testMode = false;
+
+        // Personagem de teste (Parte 3D-2) — estado 100% temporário e local a esta
+        // sessão do navegador. NUNCA é escrito em worldSectors, nunca entra no
+        // autosave e nunca é salvo em JSON: é só {x, y} em memória, existindo apenas
+        // enquanto testMode === true.
+        let testPlayer = null; // { x, y } em coordenadas de célula do setor atual
+
+        // Escolhe onde o personagem de teste começa: na posição de uma unidade/NPC
+        // já existente no setor (se houver alguma), senão a célula livre mais
+        // próxima do centro do setor.
+        function initTestPlayer() {
+            const sector = peekSector(currentSectorX, currentSectorY);
+            const existingUnit = sector.objects.find(o => o.type === 'unit' || o.type === 'npc');
+            if (existingUnit) {
+                testPlayer = { x: existingUnit.x, y: existingUnit.y };
+                return;
+            }
+            const center = Math.floor(GRID_SIZE / 2);
+            const cells = [];
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    cells.push({ c, r, dist: Math.abs(c - center) + Math.abs(r - center) });
+                }
+            }
+            cells.sort((a, b) => a.dist - b.dist);
+            for (const cell of cells) {
+                if (isAreaFree(sector, cell.c, cell.r, 1, 1)) {
+                    testPlayer = { x: cell.c, y: cell.r };
+                    return;
+                }
+            }
+            testPlayer = { x: center, y: center }; // fallback extremo (setor inteiro ocupado)
+        }
+
+        function setTestMode(active) {
+            if (active && viewMode) { playBeep(120); return; } // não permite os dois modos simultâneos
+            testMode = active;
+
+            const btn = document.getElementById('btnTestMode');
+            if (btn) {
+                btn.innerHTML = active
+                    ? '<i class="fa-solid fa-pen"></i> Modo Editor'
+                    : '<i class="fa-solid fa-gamepad"></i> Modo de Teste';
+                btn.classList.toggle('bg-amber-600', active);
+                btn.classList.toggle('hover:bg-amber-500', active);
+                btn.classList.toggle('border-amber-500', active);
+                btn.classList.toggle('bg-slate-700', !active);
+                btn.classList.toggle('hover:bg-slate-600', !active);
+                btn.classList.toggle('border-slate-600', !active);
+            }
+
+            // Indicação visual clara de que o mapa está em modo somente-leitura
+            const viewport = document.getElementById('canvasViewport');
+            if (viewport) viewport.style.outline = active ? '3px solid #f59e0b' : 'none';
+
+            if (active) {
+                // Cancela qualquer arraste/seleção em andamento para não deixar uma
+                // ação de edição "pendurada" no meio ao entrar no modo de teste.
+                isMouseDown = false;
+                isDraggingSelection = false;
+                actionSnapshot = null;
+                initTestPlayer();
+            } else {
+                testPlayer = null; // remove o personagem e limpa o estado ao voltar pro editor
+                hideInteractionPanel(); // não deixa o painel de interação "pendurado" fora do Modo de Teste
+            }
+
+            playBeep(active ? 700 : 400);
+        }
+
+        // -------------------------------------------------------------
+        // MODO DE VISUALIZAÇÃO (Parte 3E-1) — mapa somente-leitura, sem o personagem
+        // de teste, só ocultando os overlays de edição (prévia/seleção/ferramentas).
+        // Usa o mesmo renderMap() de sempre; nenhuma segunda versão do mapa é criada.
+        // -------------------------------------------------------------
+        let viewMode = false;
+
+        // Usado pelos pontos de mutação do editor (pintura, colocação, remoção,
+        // propriedades, colar/apagar, limpar setor/mundo) pra saber se o mapa está
+        // bloqueado por QUALQUER um dos dois modos somente-leitura.
+        function isMapReadOnly() { return testMode || viewMode; }
+
+        function setViewMode(active) {
+            if (active && testMode) { playBeep(120); return; } // não permite os dois modos simultâneos; Modo de Teste continua como estava
+
+            viewMode = active;
+
+            const btn = document.getElementById('btnViewMode');
+            if (btn) {
+                btn.innerHTML = active
+                    ? '<i class="fa-solid fa-pen"></i> Voltar a Editar'
+                    : '<i class="fa-solid fa-eye"></i> Visualizar Mapa';
+                btn.classList.toggle('bg-sky-600', active);
+                btn.classList.toggle('hover:bg-sky-500', active);
+                btn.classList.toggle('border-sky-500', active);
+                btn.classList.toggle('bg-slate-700', !active);
+                btn.classList.toggle('hover:bg-slate-600', !active);
+                btn.classList.toggle('border-slate-600', !active);
+            }
+
+            // Indicação visual (cor diferente da do Modo de Teste, pra não confundir os dois)
+            const viewport = document.getElementById('canvasViewport');
+            if (viewport) viewport.style.outline = active ? '3px solid #38bdf8' : 'none';
+
+            if (active) {
+                // Mesma limpeza defensiva do Modo de Teste: nenhuma ação de edição
+                // deve continuar "pendurada" ao entrar no modo de visualização.
+                isMouseDown = false;
+                isDraggingSelection = false;
+                actionSnapshot = null;
+                selectedObjectRef = null;
+                updateSelectionUI();
+            }
+
+            playBeep(active ? 700 : 400);
+        }
+
+        // -------------------------------------------------------------
+        // FERRAMENTAS DE EDIÇÃO (estado)
+        // -------------------------------------------------------------
+        let currentTool = 'paint'; // 'paint' | 'select' | 'bucket' | 'eyedropper'
+        let brushSize = 1;         // aplicado só à pintura de terreno
+        let hoverCol = -1, hoverRow = -1;
+        let selectedObjectRef = null;  // { uid } dentro do setor atual
+        let isDraggingSelection = false;
+        let dragOffset = { x: 0, y: 0 };
+        let clipboardEntity = null;    // entidade copiada (sem uid), pronta para colar
+
+        function setTool(tool) {
+            currentTool = tool;
+            if (tool !== 'select') { selectedObjectRef = null; isDraggingSelection = false; }
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-tool') === tool));
+            const labels = { paint: 'Pintar', select: 'Selecionar', bucket: 'Balde de Tinta', eyedropper: 'Conta-gotas' };
+            const lbl = document.getElementById('toolLabel');
+            if (lbl) lbl.innerText = labels[tool] || tool;
+            updateSelectionUI();
+        }
+
+        function highlightPaletteButton(id) {
+            document.querySelectorAll('.palette-btn').forEach(b => {
+                b.classList.toggle('active', b.getAttribute('data-id') === id);
+            });
+        }
+
+        // -------------------------------------------------------------
+        // CAMADAS — labels e UI dependente de seleção
+        // -------------------------------------------------------------
+        const LAYER_LABELS = { terreno: 'Terreno', decoration: 'Decoração', structures: 'Construções', units: 'Unidades' };
+
+        function updateLayerButtonsUI() {
+            document.querySelectorAll('.layer-vis-btn').forEach(btn => {
+                const layer = btn.getAttribute('data-layer');
+                const visible = layerVisibility[layer];
+                btn.innerHTML = `<i class="fa-solid ${visible ? 'fa-eye' : 'fa-eye-slash'}"></i>`;
+                btn.classList.toggle('text-emerald-400', visible);
+                btn.classList.toggle('text-slate-500', !visible);
+            });
+            document.querySelectorAll('.layer-lock-btn').forEach(btn => {
+                const layer = btn.getAttribute('data-layer');
+                const locked = layerLocked[layer];
+                btn.innerHTML = `<i class="fa-solid ${locked ? 'fa-lock' : 'fa-lock-open'}"></i>`;
+                btn.classList.toggle('text-rose-400', locked);
+                btn.classList.toggle('text-slate-400', !locked);
+            });
+        }
+
+        // Mantém o seletor de colisão do objeto selecionado sincronizado com o estado atual
+        // (chamado ao selecionar/desselecionar, trocar de ferramenta, desfazer/refazer etc).
+        function updateSelectionUI() {
+            const sel = document.getElementById('selectObjectCollision');
+            const hint = document.getElementById('objectCollisionHint');
+
+            let selectedObj = null;
+            if (currentTool === 'select' && selectedObjectRef) {
+                const sector = peekSector(currentSectorX, currentSectorY);
+                selectedObj = sector.objects.find(o => o.uid === selectedObjectRef.uid) || null;
+            }
+
+            if (sel && hint) {
+                if (selectedObj) {
+                    const locked = layerLocked[selectedObj.layer];
+                    sel.disabled = locked;
+                    sel.value = selectedObj.collisionType;
+                    hint.innerText = locked
+                        ? `Camada "${LAYER_LABELS[selectedObj.layer] || selectedObj.layer}" está bloqueada para edição.`
+                        : `${selectedObj.id} — camada "${LAYER_LABELS[selectedObj.layer] || selectedObj.layer}"`;
+                } else {
+                    sel.disabled = true;
+                    hint.innerText = 'Selecione um objeto com a ferramenta "Selecionar".';
+                }
+            }
+
+            updateUnitPropertiesUI(selectedObj);
+        }
+
+        // Painel "Propriedades da Unidade/NPC" — só aparece para entidades type 'unit' ou 'npc'.
+        function updateUnitPropertiesUI(selectedObj) {
+            const fields = document.getElementById('unitPropertiesFields');
+            const hint = document.getElementById('unitPropertiesHint');
+            if (!fields || !hint) return;
+
+            const isUnitOrNpc = selectedObj && (selectedObj.type === 'unit' || selectedObj.type === 'npc');
+
+            if (!isUnitOrNpc) {
+                fields.style.display = 'none';
+                hint.style.display = '';
+                hint.innerText = 'Selecione uma unidade ou NPC com a ferramenta "Selecionar".';
+                return;
+            }
+
+            const locked = layerLocked[selectedObj.layer];
+            fields.style.display = 'flex';
+            hint.style.display = locked ? '' : 'none';
+            if (locked) hint.innerText = `Camada "${LAYER_LABELS[selectedObj.layer] || selectedObj.layer}" está bloqueada para edição.`;
+
+            const nameInput = document.getElementById('inputUnitName');
+            const hpInput = document.getElementById('inputUnitHp');
+            const maxHpInput = document.getElementById('inputUnitMaxHp');
+            const attackInput = document.getElementById('inputUnitAttack');
+            const defenseInput = document.getElementById('inputUnitDefense');
+            const rangeInput = document.getElementById('inputUnitRange');
+            const factionSelect = document.getElementById('selectUnitFaction');
+
+            // Só repõe o valor se o campo não estiver focado agora (evita "brigar" com o que a pessoa está digitando)
+            if (document.activeElement !== nameInput) nameInput.value = selectedObj.name || '';
+            if (document.activeElement !== hpInput) hpInput.value = (typeof selectedObj.hp === 'number') ? selectedObj.hp : 0;
+            if (document.activeElement !== maxHpInput) maxHpInput.value = (typeof selectedObj.maxHp === 'number') ? selectedObj.maxHp : 0;
+            if (document.activeElement !== attackInput) attackInput.value = (typeof selectedObj.attack === 'number') ? selectedObj.attack : 0;
+            if (document.activeElement !== defenseInput) defenseInput.value = (typeof selectedObj.defense === 'number') ? selectedObj.defense : 0;
+            if (document.activeElement !== rangeInput) rangeInput.value = (typeof selectedObj.range === 'number') ? selectedObj.range : 0;
+            factionSelect.value = selectedObj.faction || 'neutro';
+
+            [nameInput, hpInput, maxHpInput, attackInput, defenseInput, rangeInput, factionSelect].forEach(el => { el.disabled = locked; });
+        }
+
+        // Aplica uma alteração de propriedade na entidade selecionada, respeitando bloqueio de
+        // camada, e faz a mudança entrar no histórico normal (Ctrl+Z desfaz, autosave é agendado).
+        function commitUnitPropertyChange(mutatorFn) {
+            if (isMapReadOnly()) return; // Modo de Teste ou Modo de Visualização: mapa é somente-leitura
+            if (!selectedObjectRef) return;
+            const sector = getOrCreateSector(currentSectorX, currentSectorY);
+            const obj = sector.objects.find(o => o.uid === selectedObjectRef.uid);
+            if (!obj || (obj.type !== 'unit' && obj.type !== 'npc') || layerLocked[obj.layer]) return;
+            beginHistoryAction();
+            mutatorFn(obj);
+            commitHistoryAction(); // já atualiza estatísticas e agenda o autosave automaticamente
+        }
+
+        // -------------------------------------------------------------
+        // RENDERIZAÇÃO DO MAPA & QUADROS DE ANIMAÇÃO
+        // -------------------------------------------------------------
+
+        // Overlay de colisão — não altera o mapa, é só visualização (ativado/desativado
+        // pelo checkbox "Mostrar Colisão" no painel de Camadas).
+        function drawCollisionOverlay(sector) {
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const type = getCellCollision(sector, c, r);
+                    if (type === 'andavel') continue;
+                    const x = c * CELL_SIZE, y = r * CELL_SIZE;
+                    if (type === 'bloqueado') {
+                        ctx.fillStyle = 'rgba(239,68,68,0.4)'; ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+                    } else if (type === 'agua') {
+                        ctx.fillStyle = 'rgba(56,189,248,0.35)'; ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+                    } else if (type === 'especial') {
+                        ctx.fillStyle = 'rgba(249,115,22,0.35)'; ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+                        ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1;
+                        ctx.beginPath(); ctx.moveTo(x, y + CELL_SIZE); ctx.lineTo(x + CELL_SIZE, y); ctx.stroke();
+                    }
+                    ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth = 1;
+                    ctx.strokeRect(x, y, CELL_SIZE, CELL_SIZE);
+                }
+            }
+        }
+
+        // -------------------------------------------------------------
+        // CAMADAS (visibilidade + bloqueio de edição)
+        // -------------------------------------------------------------
+        let layerVisibility = { terreno: true, decoration: true, structures: true, units: true };
+        let layerLocked = { terreno: false, decoration: false, structures: false, units: false };
+        let showCollisionOverlay = false;
+
+        function renderMap() {
+            const sector = peekSector(currentSectorX, currentSectorY);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Passagem 1: Terrenos — camada "Terreno"
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const x = c * CELL_SIZE;
+                    const y = r * CELL_SIZE;
+
+                    if (layerVisibility.terreno) {
+                        drawTerrainTile(sector.terrain[r][c] || 'grama', x, y);
+                    } else {
+                        ctx.fillStyle = '#0f172a'; ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE); // camada oculta: só um fundo neutro
+                    }
+
+                    // Grade
+                    ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
+                    ctx.strokeRect(x, y, CELL_SIZE, CELL_SIZE);
+                }
+            }
+
+            // Passagem 2: Renderizar Objetos, filtrados por camada visível
+            // (ordenados por profundidade: base mais baixa = desenhado por cima)
+            const visibleObjects = sector.objects.filter(o => layerVisibility[o.layer] !== false);
+            const sorted = visibleObjects.slice().sort((a, b) => (a.y + a.h) - (b.y + b.h));
+            for (const obj of sorted) {
+                const x = obj.x * CELL_SIZE;
+                const y = obj.y * CELL_SIZE;
+                const w = obj.w * CELL_SIZE;
+                const h = obj.h * CELL_SIZE;
+
+                if (obj.customImg) {
+                    if (!imageCache[obj.customImg]) {
+                        const img = new Image();
+                        img.src = obj.customImg;
+                        img.onload = () => renderMap();
+                        imageCache[obj.customImg] = img;
+                    } else {
+                        ctx.drawImage(imageCache[obj.customImg], x, y, w, h);
+                    }
+                } else {
+                    drawObjectTile(obj.id, x, y, w, h);
+                }
+            }
+
+            // Passagem 3: Overlay de colisão (visualização apenas, não modifica dados)
+            if (showCollisionOverlay) drawCollisionOverlay(sector);
+
+            updateMinimap();
+        }
+
+        // Desenha, por cima do mapa já renderizado, a prévia da ferramenta ativa
+        // (pincel/tamanho, área de colocação válida/inválida, seleção, arraste).
+        function drawToolOverlay() {
+            if (hoverCol < 0 || hoverCol >= GRID_SIZE || hoverRow < 0 || hoverRow >= GRID_SIZE) return;
+            const sector = peekSector(currentSectorX, currentSectorY);
+
+            if (currentTool === 'select') {
+                if (selectedObjectRef) {
+                    const obj = sector.objects.find(o => o.uid === selectedObjectRef.uid);
+                    if (obj) {
+                        if (isDraggingSelection) {
+                            const newX = Math.min(Math.max(hoverCol - dragOffset.x, 0), GRID_SIZE - obj.w);
+                            const newY = Math.min(Math.max(hoverRow - dragOffset.y, 0), GRID_SIZE - obj.h);
+                            const valid = isAreaFree(sector, newX, newY, obj.w, obj.h, obj.uid);
+                            ctx.fillStyle = valid ? 'rgba(34,197,94,0.35)' : 'rgba(239,68,68,0.35)';
+                            ctx.fillRect(newX * CELL_SIZE, newY * CELL_SIZE, obj.w * CELL_SIZE, obj.h * CELL_SIZE);
+                            ctx.strokeStyle = valid ? '#22c55e' : '#ef4444'; ctx.lineWidth = 2;
+                            ctx.strokeRect(newX * CELL_SIZE, newY * CELL_SIZE, obj.w * CELL_SIZE, obj.h * CELL_SIZE);
+                        }
+                        ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2; ctx.setLineDash([5, 4]);
+                        ctx.strokeRect(obj.x * CELL_SIZE, obj.y * CELL_SIZE, obj.w * CELL_SIZE, obj.h * CELL_SIZE);
+                        ctx.setLineDash([]);
+                    }
+                }
+                return;
+            }
+
+            if (currentTool === 'bucket') {
+                ctx.fillStyle = 'rgba(56,189,248,0.3)';
+                ctx.fillRect(hoverCol * CELL_SIZE, hoverRow * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                return;
+            }
+
+            if (currentTool === 'eyedropper') {
+                ctx.strokeStyle = '#facc15'; ctx.lineWidth = 2;
+                ctx.strokeRect(hoverCol * CELL_SIZE + 1, hoverRow * CELL_SIZE + 1, CELL_SIZE - 2, CELL_SIZE - 2);
+                return;
+            }
+
+            // currentTool === 'paint'
+            if (selectedElement.type === 'terrain') {
+                const half = Math.floor(brushSize / 2);
+                const startC = Math.max(0, hoverCol - half);
+                const startR = Math.max(0, hoverRow - half);
+                const endC = Math.min(GRID_SIZE, hoverCol - half + brushSize);
+                const endR = Math.min(GRID_SIZE, hoverRow - half + brushSize);
+                ctx.fillStyle = 'rgba(255,255,255,0.25)';
+                ctx.fillRect(startC * CELL_SIZE, startR * CELL_SIZE, (endC - startC) * CELL_SIZE, (endR - startR) * CELL_SIZE);
+                ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 2;
+                ctx.strokeRect(startC * CELL_SIZE, startR * CELL_SIZE, (endC - startC) * CELL_SIZE, (endR - startR) * CELL_SIZE);
+            } else if (selectedElement.type === 'clear') {
+                ctx.strokeStyle = 'rgba(244,63,94,0.8)'; ctx.lineWidth = 2;
+                ctx.strokeRect(hoverCol * CELL_SIZE + 1, hoverRow * CELL_SIZE + 1, CELL_SIZE - 2, CELL_SIZE - 2);
+            } else {
+                const w = selectedElement.w || 1, h = selectedElement.h || 1;
+                const valid = isAreaFree(sector, hoverCol, hoverRow, w, h);
+                ctx.fillStyle = valid ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)';
+                ctx.fillRect(hoverCol * CELL_SIZE, hoverRow * CELL_SIZE, w * CELL_SIZE, h * CELL_SIZE);
+                ctx.strokeStyle = valid ? '#22c55e' : '#ef4444'; ctx.lineWidth = 2;
+                ctx.strokeRect(hoverCol * CELL_SIZE, hoverRow * CELL_SIZE, w * CELL_SIZE, h * CELL_SIZE);
+            }
+        }
+
+        // Desenha o personagem de teste temporário — visual simples (círculo ciano com
+        // "rosto"), claramente diferente do estilo humanoide/tabardo das unidades e NPCs.
+        function drawTestPlayer() {
+            if (!testPlayer) return;
+            const x = testPlayer.x * CELL_SIZE;
+            const y = testPlayer.y * CELL_SIZE;
+            const cx = x + CELL_SIZE / 2;
+            const cy = y + CELL_SIZE / 2;
+
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.beginPath(); ctx.ellipse(cx, y + CELL_SIZE - 6, 14, 5, 0, 0, Math.PI * 2); ctx.fill();
+
+            ctx.fillStyle = '#22d3ee'; // ciano — não usado por nenhuma unidade/NPC existente
+            ctx.beginPath(); ctx.arc(cx, cy, 15, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2.5; ctx.stroke();
+
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath(); ctx.arc(cx - 5, cy - 3, 2.5, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(cx + 5, cy - 3, 2.5, 0, Math.PI * 2); ctx.fill();
+        }
+
+        // Game Loop para elementos animados (Água e Lava)
+        function gameLoop() {
+            renderMap();
+            if (testMode) {
+                drawTestPlayer(); // Modo de Teste: mostra o personagem, não a prévia de edição
+            } else if (!viewMode) {
+                drawToolOverlay(); // Modo de Visualização: mapa limpo, sem prévia/seleção/overlays de edição
+            }
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Hash pseudo-aleatório determinístico por posição de tile (variação sem precisar de estado)
+        function hashXY(x, y) {
+            const s = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+            return s - Math.floor(s);
+        }
+
+        // Desenho de Terrenos
+        function drawTerrainTile(type, x, y) {
+            const now = Date.now();
+            const v = hashXY(x, y);      // variação 0-1 para esta célula
+            const v2 = hashXY(x + 1, y + 1);
+
+            if (type === 'grama') {
+                ctx.fillStyle = v < 0.55 ? '#22c55e' : (v < 0.82 ? '#16a34a' : '#4ade80');
+                ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+                ctx.fillStyle = '#15803d';
+                ctx.fillRect(x + 10, y + 12, 3, 6); ctx.fillRect(x + 13, y + 10, 3, 8);
+                ctx.fillRect(x + 30, y + 26, 3, 8); ctx.fillRect(x + 33, y + 28, 3, 6);
+                ctx.fillStyle = '#166534';
+                ctx.fillRect(x + 6, y + 34, 2, 6); ctx.fillRect(x + 38, y + 8, 2, 6); ctx.fillRect(x + 20, y + 38, 2, 5);
+                if (v2 > 0.88) { ctx.fillStyle = '#fef08a'; ctx.fillRect(x + 22, y + 20, 3, 3); }
+                else if (v2 < 0.1) { ctx.fillStyle = '#f9a8d4'; ctx.fillRect(x + 16, y + 24, 3, 3); }
+            } else if (type === 'terra') {
+                ctx.fillStyle = v < 0.6 ? '#78350f' : '#8a4212';
+                ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+                ctx.fillStyle = '#451a03';
+                ctx.fillRect(x + 8, y + 8, 10, 10); ctx.fillRect(x + 26, y + 26, 12, 12);
+                ctx.fillStyle = '#5c3010';
+                ctx.fillRect(x + 4, y + 32, 6, 5); ctx.fillRect(x + 36, y + 6, 7, 6);
+                ctx.strokeStyle = 'rgba(0,0,0,0.18)'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(x + 2, y + 22); ctx.lineTo(x + 20, y + 18); ctx.lineTo(x + 28, y + 24); ctx.stroke();
+                if (v2 > 0.85) { ctx.fillStyle = '#a16207'; ctx.fillRect(x + 40, y + 38, 3, 3); }
+            } else if (type === 'agua') {
+                // Base com leve gradiente vertical simulado
+                ctx.fillStyle = '#075985'; ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+                ctx.fillStyle = '#0369a1'; ctx.fillRect(x + 2, y + 2, CELL_SIZE - 4, CELL_SIZE - 4);
+                const frame = Math.floor(now / 250) % 3;
+                const offX = frame * 6;
+                ctx.fillStyle = '#0ea5e9';
+                ctx.fillRect(x + ((4 + offX) % 28), y + 12, 18, 4);
+                ctx.fillRect(x + ((22 + offX) % 28), y + 30, 20, 4);
+                ctx.fillStyle = '#38bdf8';
+                ctx.fillRect(x + ((14 + offX) % 30), y + 22, 14, 3);
+                ctx.fillStyle = '#e0f2fe';
+                ctx.fillRect(x + ((18 + offX) % 28), y + 12, 4, 4);
+                ctx.fillRect(x + ((6 + offX * 2) % 40), y + 40, 4, 3);
+            } else if (type === 'agua_congelada') {
+                ctx.fillStyle = '#0369a1'; ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+                ctx.fillStyle = 'rgba(224, 242, 254, 0.8)'; ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+                ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(x + 4, y + 10); ctx.lineTo(x + 22, y + 16); ctx.lineTo(x + 16, y + 30);
+                ctx.moveTo(x + 22, y + 16); ctx.lineTo(x + 36, y + 12);
+                ctx.moveTo(x + 16, y + 30); ctx.lineTo(x + 30, y + 40);
+                ctx.stroke();
+                ctx.fillStyle = 'rgba(255,255,255,0.6)';
+                ctx.fillRect(x + 30, y + 6, 6, 3);
+            } else if (type === 'neve') {
+                ctx.fillStyle = '#f0f9ff'; ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+                ctx.fillStyle = '#dbeafe';
+                ctx.fillRect(x + 6, y + 10, 10, 4); ctx.fillRect(x + 28, y + 28, 12, 4);
+                ctx.fillStyle = '#bae6fd';
+                ctx.fillRect(x + 16, y + 34, 14, 3);
+                ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                ctx.fillRect(x + 2 + v * 40, y + 2 + v2 * 40, 2, 2);
+                if (v > 0.75) { ctx.fillStyle = '#93c5fd'; ctx.fillRect(x + 24, y + 14, 4, 4); }
+            } else if (type === 'areia_praia') {
+                ctx.fillStyle = '#fef9c3'; ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+                ctx.strokeStyle = '#fde68a'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(x + 2, y + 16); ctx.quadraticCurveTo(x + 24, y + 10, x + 46, y + 18); ctx.stroke();
+                ctx.strokeStyle = '#facc15';
+                ctx.beginPath(); ctx.moveTo(x + 4, y + 34); ctx.quadraticCurveTo(x + 24, y + 28, x + 44, y + 36); ctx.stroke();
+                ctx.fillStyle = '#f8fafc';
+                if (v > 0.7) { ctx.fillRect(x + 30, y + 22, 3, 3); }
+            } else if (type === 'areia') {
+                ctx.fillStyle = v < 0.6 ? '#eab308' : '#d4a017'; ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+                ctx.strokeStyle = '#ca8a04'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(x, y + 14); ctx.quadraticCurveTo(x + 24, y + 6, x + 48, y + 14); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(x, y + 34); ctx.quadraticCurveTo(x + 24, y + 26, x + 48, y + 34); ctx.stroke();
+                ctx.fillStyle = '#a16207';
+                ctx.fillRect(x + 10, y + 40, 3, 3); ctx.fillRect(x + 36, y + 6, 3, 3);
+            } else if (type === 'pedra') {
+                ctx.fillStyle = '#475569'; ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+                ctx.strokeStyle = '#334155'; ctx.lineWidth = 2;
+                ctx.strokeRect(x + 2, y + 2, 20, 20); ctx.strokeRect(x + 26, y + 2, 20, 20);
+                ctx.strokeRect(x + 2, y + 26, 20, 20); ctx.strokeRect(x + 26, y + 26, 20, 20);
+                ctx.fillStyle = 'rgba(255,255,255,0.06)';
+                ctx.fillRect(x + 3, y + 3, 18, 4); ctx.fillRect(x + 27, y + 27, 18, 4);
+            } else if (type === 'taiga') {
+                ctx.fillStyle = v < 0.65 ? '#14532d' : '#166534'; ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+                ctx.fillStyle = '#052e16';
+                ctx.fillRect(x + 10, y + 10, 6, 6); ctx.fillRect(x + 30, y + 30, 5, 5);
+                ctx.fillStyle = '#065f46';
+                ctx.fillRect(x + 4, y + 30, 3, 8); ctx.fillRect(x + 36, y + 8, 3, 8);
+                if (v2 > 0.8) { ctx.fillStyle = '#a3e635'; ctx.fillRect(x + 22, y + 22, 3, 3); }
+            } else if (type === 'rocha') {
+                ctx.fillStyle = '#334155'; ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+                ctx.fillStyle = '#1e293b';
+                ctx.fillRect(x + 6, y + 6, 36, 36);
+                ctx.fillStyle = '#475569';
+                ctx.fillRect(x + 8, y + 8, 14, 12);
+                ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(x + 10, y + 30); ctx.lineTo(x + 22, y + 24); ctx.lineTo(x + 30, y + 34); ctx.stroke();
+            } else if (type === 'manguezal') {
+                ctx.fillStyle = '#3f4f24'; ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+                ctx.fillStyle = '#1c260d';
+                ctx.fillRect(x + 4, y + 16, 14, 6); ctx.fillRect(x + 24, y + 28, 16, 6);
+                ctx.fillStyle = '#65a30d';
+                ctx.fillRect(x + 12, y + 8, 4, 4); ctx.fillRect(x + 30, y + 20, 4, 4);
+                ctx.strokeStyle = '#2d1b04'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(x + 20, y + 40); ctx.lineTo(x + 26, y + 32); ctx.lineTo(x + 22, y + 24); ctx.stroke();
+                if (v > 0.75) { ctx.fillStyle = 'rgba(101,163,13,0.5)'; ctx.fillRect(x + 6, y + 34, 10, 6); }
+            } else if (type === 'lama') {
+                ctx.fillStyle = '#451a03'; ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+                ctx.fillStyle = '#270e02';
+                ctx.fillRect(x + 6, y + 12, 18, 10); ctx.fillRect(x + 22, y + 28, 16, 12);
+                ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(x + 4, y + 6); ctx.lineTo(x + 14, y + 4); ctx.stroke();
+                if (v > 0.6) { ctx.fillStyle = 'rgba(120,80,40,0.4)'; ctx.beginPath(); ctx.arc(x + 34, y + 10, 3, 0, Math.PI * 2); ctx.fill(); }
+            } else if (type === 'lava') {
+                ctx.fillStyle = '#7c2d12'; ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+                const lFrame = Math.floor(now / 200) % 4;
+                ctx.fillStyle = '#dc2626';
+                ctx.fillRect(x + 2, y + 2, CELL_SIZE - 4, CELL_SIZE - 4);
+                ctx.fillStyle = '#f97316';
+                ctx.fillRect(x + ((lFrame * 8) % 32), y + 8, 16, 8);
+                ctx.fillRect(x + ((32 - lFrame * 8) % 32), y + 28, 16, 8);
+                ctx.fillStyle = '#fef08a';
+                ctx.fillRect(x + ((lFrame * 8 + 4) % 32), y + 10, 6, 4);
+                ctx.fillRect(x + ((lFrame * 6 + 20) % 36), y + 32, 4, 3);
+                ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(x + 4, y + 20); ctx.lineTo(x + 18, y + 18); ctx.lineTo(x + 24, y + 26); ctx.stroke();
+            }
+        }
+
+        // Desenho de Objetos, Vegetação e Estruturas
+        function drawObjectTile(id, x, y, w, h) {
+            if (id === 'arvore') {
+                const vv = hashXY(x, y);
+                ctx.fillStyle = 'rgba(0,0,0,0.22)';
+                ctx.beginPath(); ctx.ellipse(x + 24, y + h - 4, 15, 5, 0, 0, Math.PI*2); ctx.fill();
+                // Tronco com textura de casca
+                ctx.fillStyle = '#5c3010'; ctx.fillRect(x + 18, y + 50, 12, 40);
+                ctx.strokeStyle = 'rgba(58,28,5,0.6)'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(x + 21, y + 52); ctx.lineTo(x + 21, y + 88); ctx.moveTo(x + 26, y + 55); ctx.lineTo(x + 26, y + 85); ctx.stroke();
+                // Copa em camadas com profundidade
+                ctx.fillStyle = '#14532d';
+                ctx.beginPath(); ctx.arc(x + 24, y + 32, 22, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#15803d';
+                ctx.beginPath(); ctx.arc(x + 14, y + 24, 15, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(x + 34, y + 28, 14, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(x + 24, y + 14, 13, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#22c55e';
+                ctx.beginPath(); ctx.arc(x + 18, y + 18, 8, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(x + 30, y + 12, 6, 0, Math.PI*2); ctx.fill();
+                if (vv > 0.7) { ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.arc(x + 32, y + 38, 3, 0, Math.PI*2); ctx.fill(); }
+            } else if (id === 'pinheiro') {
+                ctx.fillStyle = 'rgba(0,0,0,0.22)';
+                ctx.beginPath(); ctx.ellipse(x + 24, y + h - 4, 13, 4, 0, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#5c3010'; ctx.fillRect(x + 20, y + 70, 8, 22);
+                ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.beginPath(); ctx.moveTo(x + 22, y + 72); ctx.lineTo(x + 22, y + 90); ctx.stroke();
+                // Camadas de galhos (base maior, topo menor) com sombra lateral
+                ctx.fillStyle = '#0f3d20';
+                ctx.beginPath(); ctx.moveTo(x + 4, y + 70); ctx.lineTo(x + 24, y + 30); ctx.lineTo(x + 44, y + 70); ctx.fill();
+                ctx.fillStyle = '#166534';
+                ctx.beginPath(); ctx.moveTo(x + 24, y + 30); ctx.lineTo(x + 36, y + 62); ctx.lineTo(x + 24, y + 62); ctx.fill();
+                ctx.fillStyle = '#134e2e';
+                ctx.beginPath(); ctx.moveTo(x + 8, y + 40); ctx.lineTo(x + 24, y + 6); ctx.lineTo(x + 40, y + 40); ctx.fill();
+                ctx.fillStyle = '#15803d';
+                ctx.beginPath(); ctx.moveTo(x + 24, y + 6); ctx.lineTo(x + 32, y + 32); ctx.lineTo(x + 24, y + 32); ctx.fill();
+            } else if (id === 'coqueiro') {
+                ctx.fillStyle = 'rgba(0,0,0,0.22)';
+                ctx.beginPath(); ctx.ellipse(x + 22, y + h - 4, 14, 4, 0, 0, Math.PI*2); ctx.fill();
+                // Tronco curvado com anéis
+                ctx.fillStyle = '#78350f';
+                ctx.fillRect(x + 16, y + 50, 10, 42);
+                ctx.fillRect(x + 20, y + 24, 10, 28);
+                ctx.strokeStyle = 'rgba(69,26,3,0.6)'; ctx.lineWidth = 1;
+                for (let ly = y + 30; ly < y + 88; ly += 8) { ctx.beginPath(); ctx.moveTo(x + 16 + (ly < y+50 ? 4:0), ly); ctx.lineTo(x + 26 + (ly < y+50 ? 4:0), ly); ctx.stroke(); }
+                // Folhas em leque (mais segmentos)
+                ctx.fillStyle = '#166534';
+                ctx.fillRect(x, y + 10, 22, 7); ctx.fillRect(x + 26, y + 10, 22, 7);
+                ctx.fillRect(x + 10, y, 28, 10); ctx.fillRect(x + 6, y + 18, 34, 7);
+                ctx.fillStyle = '#16a34a';
+                ctx.fillRect(x + 2, y + 14, 18, 4); ctx.fillRect(x + 28, y + 14, 18, 4);
+                ctx.fillRect(x + 12, y + 3, 24, 5);
+                // Cocos
+                ctx.fillStyle = '#451a03';
+                ctx.beginPath(); ctx.arc(x + 21, y + 23, 3, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(x + 28, y + 23, 3, 0, Math.PI*2); ctx.fill();
+            } else if (id === 'savana') {
+                ctx.fillStyle = 'rgba(0,0,0,0.15)';
+                ctx.beginPath(); ctx.ellipse(x + 24, y + h - 3, 18, 4, 0, 0, Math.PI*2); ctx.fill();
+                // Touceira de capim alto com lâminas de alturas variadas
+                const blades = [
+                    [6, 90, 6, '#ca8a04'], [12, 78, 10, '#eab308'], [18, 66, 14, '#d4a017'],
+                    [24, 60, 18, '#facc15'], [30, 68, 12, '#eab308'], [36, 80, 8, '#ca8a04'], [40, 92, 5, '#d4a017']
+                ];
+                blades.forEach(([bx, by, bh, color]) => {
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.moveTo(x + bx - 3, y + by);
+                    ctx.lineTo(x + bx, y + by - bh);
+                    ctx.lineTo(x + bx + 3, y + by);
+                    ctx.fill();
+                });
+            } else if (id === 'cacto') {
+                ctx.fillStyle = 'rgba(0,0,0,0.2)';
+                ctx.beginPath(); ctx.ellipse(x + 24, y + h - 4, 12, 4, 0, 0, Math.PI*2); ctx.fill();
+                const cx = x + 18;
+                ctx.fillStyle = '#15803d';
+                ctx.fillRect(cx, y + 10, 12, 80);
+                ctx.fillRect(cx - 12, y + 36, 12, 8); ctx.fillRect(cx - 12, y + 20, 8, 24);
+                ctx.fillRect(cx + 12, y + 48, 12, 8); ctx.fillRect(cx + 16, y + 28, 8, 28);
+                ctx.fillStyle = '#166534'; // sombra lateral
+                ctx.fillRect(cx + 8, y + 10, 4, 80); ctx.fillRect(cx - 12, y + 20, 3, 24); ctx.fillRect(cx + 16, y + 28, 3, 28);
+                ctx.fillStyle = '#052e16';
+                for (let sy = y + 14; sy < y + 86; sy += 8) { ctx.fillRect(cx + 2, sy, 2, 2); ctx.fillRect(cx + 8, sy + 4, 2, 2); }
+                ctx.fillStyle = '#f472b6';
+                ctx.beginPath(); ctx.arc(cx + 6, y + 8, 4, 0, Math.PI*2); ctx.fill();
+            } else if (id === 'arbusto_grama') {
+                ctx.fillStyle = 'rgba(0,0,0,0.18)';
+                ctx.beginPath(); ctx.ellipse(x + 24, y + 42, 14, 4, 0, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#15803d'; ctx.beginPath(); ctx.arc(x + 24, y + 28, 14, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#166534'; ctx.beginPath(); ctx.arc(x + 32, y + 32, 9, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#22c55e'; ctx.beginPath(); ctx.arc(x + 18, y + 22, 9, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#4ade80'; ctx.beginPath(); ctx.arc(x + 22, y + 20, 4, 0, Math.PI*2); ctx.fill();
+            } else if (id === 'arbusto_neve') {
+                ctx.fillStyle = 'rgba(0,0,0,0.15)';
+                ctx.beginPath(); ctx.ellipse(x + 24, y + 42, 14, 4, 0, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#075985'; ctx.beginPath(); ctx.arc(x + 24, y + 28, 14, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#0284c7'; ctx.beginPath(); ctx.arc(x + 30, y + 32, 9, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#f0f9ff'; ctx.beginPath(); ctx.arc(x + 24, y + 20, 11, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#dbeafe'; ctx.beginPath(); ctx.arc(x + 30, y + 26, 6, 0, Math.PI*2); ctx.fill();
+            } else if (id === 'arbusto_praia') {
+                ctx.fillStyle = 'rgba(0,0,0,0.15)';
+                ctx.beginPath(); ctx.ellipse(x + 24, y + 42, 14, 4, 0, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#a16207'; ctx.fillRect(x + 12, y + 20, 24, 20);
+                ctx.fillStyle = '#ca8a04'; ctx.fillRect(x + 14, y + 22, 20, 16);
+                ctx.fillStyle = '#fef08a'; ctx.fillRect(x + 16, y + 14, 16, 8);
+                ctx.fillStyle = '#fde047'; ctx.fillRect(x + 18, y + 12, 12, 5);
+            } else if (id === 'arbusto_mangue') {
+                ctx.fillStyle = 'rgba(0,0,0,0.15)';
+                ctx.beginPath(); ctx.ellipse(x + 24, y + 42, 14, 4, 0, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#1a2e05'; ctx.fillRect(x + 10, y + 18, 28, 24);
+                ctx.fillStyle = '#365314'; ctx.fillRect(x + 12, y + 20, 24, 20);
+                ctx.fillStyle = '#4d7c0f'; ctx.fillRect(x + 14, y + 12, 20, 12);
+                ctx.fillStyle = '#65a30d'; ctx.fillRect(x + 18, y + 10, 12, 6);
+                // Raízes expostas
+                ctx.strokeStyle = '#1a2e05'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(x + 14, y + 42); ctx.lineTo(x + 10, y + 48); ctx.moveTo(x + 34, y + 42); ctx.lineTo(x + 38, y + 48); ctx.stroke();
+            } else if (id === 'casa') {
+                // Sombra no chão
+                ctx.fillStyle = 'rgba(0,0,0,0.25)';
+                ctx.beginPath(); ctx.ellipse(x + w/2, y + h - 3, w/2 - 8, 5, 0, 0, Math.PI*2); ctx.fill();
+                // Telhado (duas águas, com face sombreada)
+                ctx.fillStyle = '#dc2626';
+                ctx.beginPath(); ctx.moveTo(x + 4, y + 42); ctx.lineTo(x + w/2, y + 6); ctx.lineTo(x + w - 4, y + 42); ctx.fill();
+                ctx.fillStyle = '#991b1b';
+                ctx.beginPath(); ctx.moveTo(x + w/2, y + 6); ctx.lineTo(x + w - 4, y + 42); ctx.lineTo(x + w/2, y + 42); ctx.fill();
+                ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = 1;
+                for (let i = 1; i <= 3; i++) {
+                    ctx.beginPath(); ctx.moveTo(x + 4 + i*4, y + 42 - i*9); ctx.lineTo(x + w - 4 - i*4, y + 42 - i*9); ctx.stroke();
+                }
+                ctx.fillStyle = '#7f1d1d'; ctx.fillRect(x + w/2 - 3, y + 4, 6, 6); // cumeeira
+                // Paredes com textura de tábuas
+                ctx.fillStyle = '#fde047'; ctx.fillRect(x + 8, y + 42, w - 16, h - 46);
+                ctx.strokeStyle = 'rgba(120,53,15,0.3)'; ctx.lineWidth = 1;
+                for (let ly = y + 50; ly < y + h - 4; ly += 9) {
+                    ctx.beginPath(); ctx.moveTo(x + 8, ly); ctx.lineTo(x + w - 8, ly); ctx.stroke();
+                }
+                ctx.fillStyle = 'rgba(0,0,0,0.08)'; ctx.fillRect(x + w - 24, y + 42, 8, h - 46); // sombra lateral
+                // Janela com moldura e cruzeta
+                ctx.fillStyle = '#78350f'; ctx.fillRect(x + 14, y + 52, 22, 20);
+                ctx.fillStyle = '#38bdf8'; ctx.fillRect(x + 17, y + 55, 16, 14);
+                ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(x + 25, y + 55); ctx.lineTo(x + 25, y + 69); ctx.moveTo(x + 17, y + 62); ctx.lineTo(x + 33, y + 62); ctx.stroke();
+                // Porta com maçaneta
+                ctx.fillStyle = '#5c3010'; ctx.fillRect(x + w - 34, y + 56, 20, 36);
+                ctx.strokeStyle = '#3a1c05'; ctx.lineWidth = 1;
+                ctx.strokeRect(x + w - 34, y + 56, 20, 36);
+                ctx.beginPath(); ctx.moveTo(x + w - 34, y + 74); ctx.lineTo(x + w - 14, y + 74); ctx.stroke();
+                ctx.fillStyle = '#fde047'; ctx.beginPath(); ctx.arc(x + w - 18, y + 76, 1.6, 0, Math.PI*2); ctx.fill();
+                // Contorno geral
+                ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 1.5;
+                ctx.strokeRect(x + 8, y + 42, w - 16, h - 46);
+            } else if (id === 'casa_2andares') {
+                ctx.fillStyle = 'rgba(0,0,0,0.25)';
+                ctx.beginPath(); ctx.ellipse(x + w/2, y + h - 3, w/2 - 6, 5, 0, 0, Math.PI*2); ctx.fill();
+                // Telhado
+                ctx.fillStyle = '#b91c1c';
+                ctx.beginPath(); ctx.moveTo(x + 2, y + 36); ctx.lineTo(x + w/2, y + 4); ctx.lineTo(x + w - 2, y + 36); ctx.fill();
+                ctx.fillStyle = '#7f1d1d';
+                ctx.beginPath(); ctx.moveTo(x + w/2, y + 4); ctx.lineTo(x + w - 2, y + 36); ctx.lineTo(x + w/2, y + 36); ctx.fill();
+                ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = 1;
+                for (let i = 1; i <= 2; i++) {
+                    ctx.beginPath(); ctx.moveTo(x + 2 + i*5, y + 36 - i*10); ctx.lineTo(x + w - 2 - i*5, y + 36 - i*10); ctx.stroke();
+                }
+                // 2º Andar (madeira à mostra estilo enxaimel)
+                ctx.fillStyle = '#fde047'; ctx.fillRect(x + 8, y + 36, w - 16, 44);
+                ctx.strokeStyle = 'rgba(120,53,15,0.5)'; ctx.lineWidth = 2;
+                ctx.strokeRect(x + 8, y + 36, w - 16, 44);
+                ctx.beginPath(); ctx.moveTo(x + w/2, y + 36); ctx.lineTo(x + w/2, y + 80); ctx.stroke();
+                ctx.fillStyle = '#0c4a6e'; ctx.fillRect(x + 15, y + 45, 17, 17); ctx.fillRect(x + w - 32, y + 45, 17, 17);
+                ctx.fillStyle = '#38bdf8'; ctx.fillRect(x + 16, y + 46, 15, 15); ctx.fillRect(x + w - 31, y + 46, 15, 15);
+                // Sacada/Viga saliente
+                ctx.fillStyle = '#78350f'; ctx.fillRect(x + 4, y + 80, w - 8, 7);
+                ctx.fillStyle = '#451a03'; ctx.fillRect(x + 4, y + 85, w - 8, 2);
+                // 1º Andar (reboco claro)
+                ctx.fillStyle = '#f5e8c8'; ctx.fillRect(x + 8, y + 87, w - 16, h - 91);
+                ctx.strokeStyle = 'rgba(0,0,0,0.15)'; ctx.lineWidth = 1;
+                ctx.strokeRect(x + 8, y + 87, w - 16, h - 91);
+                ctx.fillStyle = '#0c4a6e'; ctx.fillRect(x + 15, y + 97, 19, 21);
+                ctx.fillStyle = '#38bdf8'; ctx.fillRect(x + 16, y + 98, 17, 19);
+                ctx.fillStyle = '#4a2408'; ctx.fillRect(x + w - 38, y + 95, 24, 44);
+                ctx.strokeStyle = '#2a1404'; ctx.strokeRect(x + w - 38, y + 95, 24, 44);
+            } else if (id === 'muralha') {
+                // Base de pedra empilhada com juntas alternadas
+                ctx.fillStyle = '#64748b'; ctx.fillRect(x, y, w, h);
+                ctx.fillStyle = '#94a3b8'; ctx.fillRect(x, y, w, 3); // brilho superior
+                ctx.strokeStyle = 'rgba(30,41,59,0.6)'; ctx.lineWidth = 1;
+                const rows = 4, offset = h / rows;
+                for (let i = 0; i <= rows; i++) {
+                    ctx.beginPath(); ctx.moveTo(x, y + i*offset); ctx.lineTo(x + w, y + i*offset); ctx.stroke();
+                }
+                for (let i = 0; i < rows; i++) {
+                    const shift = (i % 2 === 0) ? 0 : w/2;
+                    ctx.beginPath(); ctx.moveTo(x + shift, y + i*offset); ctx.lineTo(x + shift, y + (i+1)*offset); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(x + shift + w/2, y + i*offset); ctx.lineTo(x + shift + w/2, y + (i+1)*offset); ctx.stroke();
+                }
+                // Ameias (merlões) no topo
+                ctx.fillStyle = '#475569';
+                ctx.fillRect(x, y - 6, 10, 6); ctx.fillRect(x + w - 10, y - 6, 10, 6);
+                ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.strokeRect(x, y, w, h);
+            } else if (id === 'torre') {
+                ctx.fillStyle = 'rgba(0,0,0,0.25)';
+                ctx.beginPath(); ctx.ellipse(x + w/2, y + h - 2, w/2 - 6, 5, 0, 0, Math.PI*2); ctx.fill();
+                // Corpo cônico da torre
+                ctx.fillStyle = '#64748b';
+                ctx.beginPath(); ctx.moveTo(x + 4, y + h); ctx.lineTo(x + 10, y + 18); ctx.lineTo(x + w - 10, y + 18); ctx.lineTo(x + w - 4, y + h); ctx.fill();
+                ctx.fillStyle = '#475569';
+                ctx.beginPath(); ctx.moveTo(x + w/2, y + h); ctx.lineTo(x + w - 10, y + 18); ctx.lineTo(x + w - 4, y + h); ctx.fill();
+                // Fiadas de pedra
+                ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 1;
+                for (let ly = y + 26; ly < y + h; ly += 12) {
+                    ctx.beginPath(); ctx.moveTo(x + 8, ly); ctx.lineTo(x + w - 8, ly); ctx.stroke();
+                }
+                // Coroamento com ameias
+                ctx.fillStyle = '#334155'; ctx.fillRect(x + 2, y + 6, w - 4, 16);
+                ctx.fillStyle = '#475569';
+                for (let mx = 0; mx < 3; mx++) ctx.fillRect(x + 4 + mx*((w-8)/3), y, (w-8)/3 - 4, 8);
+                // Telhado cônico
+                ctx.fillStyle = '#7f1d1d';
+                ctx.beginPath(); ctx.moveTo(x - 2, y + 6); ctx.lineTo(x + w/2, y - 22); ctx.lineTo(x + w + 2, y + 6); ctx.fill();
+                // Janela em arco
+                ctx.fillStyle = '#0f172a';
+                ctx.beginPath(); ctx.arc(x + w/2, y + 46, 7, Math.PI, 0); ctx.fill();
+                ctx.fillRect(x + w/2 - 7, y + 46, 14, 14);
+            } else if (id === 'portao') {
+                // Muralha ao redor do portão
+                ctx.fillStyle = '#64748b'; ctx.fillRect(x, y, w, h);
+                ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = 1;
+                for (let ly = y + 8; ly < y + h; ly += 10) { ctx.beginPath(); ctx.moveTo(x, ly); ctx.lineTo(x + w, ly); ctx.stroke(); }
+                // Vão do portão em arco
+                ctx.fillStyle = '#1e293b';
+                ctx.beginPath(); ctx.moveTo(x + 14, y + h); ctx.lineTo(x + 14, y + 26); ctx.arc(x + w/2, y + 26, w/2 - 14, Math.PI, 0); ctx.lineTo(x + w - 14, y + h); ctx.fill();
+                // Portas de madeira com reforços de ferro
+                ctx.fillStyle = '#5c3010';
+                ctx.beginPath(); ctx.moveTo(x + 18, y + h); ctx.lineTo(x + 18, y + 30); ctx.arc(x + w/2, y + 30, w/2 - 18, Math.PI, 0); ctx.lineTo(x + w - 18, y + h); ctx.fill();
+                ctx.strokeStyle = '#2a1404'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(x + w/2, y + 20); ctx.lineTo(x + w/2, y + h); ctx.stroke();
+                ctx.strokeStyle = 'rgba(120,80,40,0.5)';
+                for (let ly = y + 40; ly < y + h; ly += 12) { ctx.beginPath(); ctx.moveTo(x + 20, ly); ctx.lineTo(x + w - 20, ly); ctx.stroke(); }
+                ctx.fillStyle = '#94a3b8';
+                ctx.fillRect(x + w/2 - 12, y + 50, 6, 3); ctx.fillRect(x + w/2 + 6, y + 50, 6, 3);
+                // Ameias no topo
+                ctx.fillStyle = '#475569'; ctx.fillRect(x, y - 6, 10, 6); ctx.fillRect(x + w - 10, y - 6, 10, 6);
+            } else if (id === 'vulcao') {
+                // Vulcão (3x3) com camadas de rocha e brilho de lava
+                ctx.fillStyle = '#44403c';
+                ctx.beginPath(); ctx.moveTo(x + 8, y + h); ctx.lineTo(x + 34, y + 22); ctx.lineTo(x + w - 34, y + 22); ctx.lineTo(x + w - 8, y + h); ctx.fill();
+                ctx.fillStyle = '#292524';
+                ctx.beginPath(); ctx.moveTo(x + 22, y + h); ctx.lineTo(x + 42, y + 26); ctx.lineTo(x + w - 42, y + 26); ctx.lineTo(x + w - 22, y + h); ctx.fill();
+                // Veios de lava descendo pela encosta
+                ctx.fillStyle = '#f97316';
+                ctx.fillRect(x + w/2 - 24, y + 30, 5, h - 34); ctx.fillRect(x + w/2 + 16, y + 40, 5, h - 44);
+                ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = 1;
+                for (let ly = y + 40; ly < y + h; ly += 14) { ctx.beginPath(); ctx.moveTo(x + 20, ly); ctx.lineTo(x + w - 20, ly); ctx.stroke(); }
+                // Cratera incandescente
+                ctx.fillStyle = '#7c2d12'; ctx.fillRect(x + 34, y + 16, w - 68, 16);
+                ctx.fillStyle = '#ef4444'; ctx.fillRect(x + 38, y + 18, w - 76, 12);
+                ctx.fillStyle = '#fef08a'; ctx.fillRect(x + 48, y + 20, w - 96, 8);
+                // Fumaça
+                ctx.fillStyle = 'rgba(120,113,108,0.5)';
+                ctx.beginPath(); ctx.arc(x + w/2 - 10, y + 4, 10, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(x + w/2 + 12, y - 8, 13, 0, Math.PI*2); ctx.fill();
+            } else if (id === 'barco_pequeno') {
+                ctx.fillStyle = 'rgba(0,0,0,0.15)';
+                ctx.beginPath(); ctx.ellipse(x + w/2, y + h - 6, 16, 6, 0, 0, Math.PI*2); ctx.fill();
+                // Casco
+                ctx.fillStyle = '#5c3010';
+                ctx.beginPath(); ctx.ellipse(x + w/2, y + h/2, 14, 38, 0, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#78350f';
+                ctx.beginPath(); ctx.ellipse(x + w/2, y + h/2 - 2, 11, 34, 0, 0, Math.PI*2); ctx.fill();
+                ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = 1;
+                for (let ly = y + 20; ly < y + h - 10; ly += 8) { ctx.beginPath(); ctx.moveTo(x + w/2 - 9, ly); ctx.lineTo(x + w/2 + 9, ly); ctx.stroke(); }
+                // Banco e remo
+                ctx.fillStyle = '#fde047'; ctx.fillRect(x + w/2 - 8, y + h/2 - 3, 16, 5);
+                ctx.strokeStyle = '#451a03'; ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.moveTo(x + w/2 - 16, y + 16); ctx.lineTo(x + w/2 + 16, y + h - 16); ctx.stroke();
+            } else if (id === 'barco_medio') {
+                ctx.fillStyle = 'rgba(0,0,0,0.15)';
+                ctx.beginPath(); ctx.ellipse(x + w/2, y + h - 8, 30, 8, 0, 0, Math.PI*2); ctx.fill();
+                // Casco
+                ctx.fillStyle = '#361502';
+                ctx.beginPath(); ctx.ellipse(x + w/2, y + h/2, 28, 60, 0, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#78350f'; ctx.fillRect(x + 12, y + 24, w - 24, h - 48);
+                ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 1;
+                for (let ly = y + 30; ly < y + h - 24; ly += 8) { ctx.beginPath(); ctx.moveTo(x + 14, ly); ctx.lineTo(x + w - 14, ly); ctx.stroke(); }
+                // Mastro e velas com curvatura
+                ctx.fillStyle = '#000000'; ctx.fillRect(x + w/2 - 2, y + 8, 4, 112);
+                ctx.fillStyle = '#f8fafc';
+                ctx.beginPath(); ctx.moveTo(x + 8, y + 34); ctx.quadraticCurveTo(x + w/2, y + 20, x + w - 8, y + 36); ctx.lineTo(x + w - 12, y + 74); ctx.quadraticCurveTo(x + w/2, y + 84, x + 12, y + 74); ctx.fill();
+                ctx.strokeStyle = 'rgba(0,0,0,0.15)'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(x + w/2, y + 26); ctx.lineTo(x + w/2, y + 80); ctx.stroke();
+                // Bandeira
+                ctx.fillStyle = '#ef4444'; ctx.fillRect(x + w/2 + 2, y + 8, 16, 10);
+            } else if (id === 'barco_grande') {
+                ctx.fillStyle = 'rgba(0,0,0,0.15)';
+                ctx.beginPath(); ctx.ellipse(x + w/2, y + h - 10, 52, 10, 0, 0, Math.PI*2); ctx.fill();
+                // Casco do galeão
+                ctx.fillStyle = '#28100a';
+                ctx.beginPath(); ctx.ellipse(x + w/2, y + h/2, 50, 85, 0, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#78350f'; ctx.fillRect(x + 20, y + 30, w - 40, h - 60);
+                ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 1;
+                for (let ly = y + 36; ly < y + h - 30; ly += 9) { ctx.beginPath(); ctx.moveTo(x + 22, ly); ctx.lineTo(x + w - 22, ly); ctx.stroke(); }
+                // Amuras douradas
+                ctx.fillStyle = '#facc15'; ctx.fillRect(x + 24, y + h - 34, w - 48, 6);
+                // Velas múltiplas com curvatura e sombra
+                ctx.fillStyle = '#f1f5f9';
+                ctx.beginPath(); ctx.moveTo(x + 14, y + 40); ctx.quadraticCurveTo(x + w/2, y + 24, x + w - 14, y + 42); ctx.lineTo(x + w - 20, y + 76); ctx.quadraticCurveTo(x + w/2, y + 86, x + 20, y + 76); ctx.fill();
+                ctx.beginPath(); ctx.moveTo(x + 20, y + 94); ctx.quadraticCurveTo(x + w/2, y + 82, x + w - 20, y + 96); ctx.lineTo(x + w - 24, y + 132); ctx.quadraticCurveTo(x + w/2, y + 140, x + 24, y + 132); ctx.fill();
+                // Mastros
+                ctx.fillStyle = '#1c0a03'; ctx.fillRect(x + w/2 - 3, y + 8, 6, 152);
+                ctx.fillRect(x + w/2 - 44, y + 40, 4, 60); ctx.fillRect(x + w/2 + 40, y + 40, 4, 60);
+                // Bandeira
+                ctx.fillStyle = '#ef4444'; ctx.fillRect(x + w/2 + 3, y + 10, 20, 12);
+                ctx.fillStyle = '#fde047'; ctx.fillRect(x + w/2 + 3, y + 10, 6, 12);
+            } else if (id === 'dungeon') {
+                // Caverna rochosa 3x3 com entrada escura (coordenadas fixas: render estável a cada frame)
+                const P = (pts) => { ctx.beginPath(); pts.forEach(([px, py], i) => i ? ctx.lineTo(x + px, y + py) : ctx.moveTo(x + px, y + py)); ctx.closePath(); };
+                ctx.fillStyle = 'rgba(0,0,0,0.25)';
+                ctx.beginPath(); ctx.ellipse(x + w/2, y + h - 5, w/2 - 8, 8, 0, 0, Math.PI*2); ctx.fill();
+                // Massa de rocha irregular
+                P([[8,138],[3,102],[13,66],[30,36],[56,13],[90,11],[115,30],[133,62],[141,102],[136,138]]);
+                ctx.fillStyle = '#4b5563'; ctx.fill();
+                ctx.strokeStyle = 'rgba(0,0,0,0.45)'; ctx.lineWidth = 2; ctx.stroke();
+                P([[16,136],[12,102],[22,70],[38,44],[60,24],[86,22],[108,38],[124,66],[130,102],[126,136]]);
+                ctx.fillStyle = '#6b7280'; ctx.fill();
+                P([[30,42],[56,21],[84,19],[72,34],[46,52]]);
+                ctx.fillStyle = '#9ca3af'; ctx.fill();            // luz no topo
+                P([[110,38],[125,66],[131,102],[127,136],[112,136],[116,92],[108,62]]);
+                ctx.fillStyle = '#374151'; ctx.fill();            // sombra lateral
+                // Blocos/rachaduras
+                ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 1.5;
+                [[22,84,38,78],[104,80,120,88],[48,40,62,52],[92,46,104,58],[16,112,30,118],[116,112,128,106]].forEach(([a,b,c,d]) => {
+                    ctx.beginPath(); ctx.moveTo(x + a, y + b); ctx.lineTo(x + c, y + d); ctx.stroke();
+                });
+                // Entrada: arco preto com fundo levemente mais claro (profundidade)
+                ctx.fillStyle = '#05060a';
+                ctx.beginPath(); ctx.moveTo(x + 44, y + 138); ctx.lineTo(x + 44, y + 94);
+                ctx.arc(x + 72, y + 94, 28, Math.PI, 0); ctx.lineTo(x + 100, y + 138); ctx.closePath(); ctx.fill();
+                ctx.fillStyle = '#0d1018';
+                ctx.beginPath(); ctx.moveTo(x + 54, y + 138); ctx.lineTo(x + 54, y + 98);
+                ctx.arc(x + 72, y + 98, 18, Math.PI, 0); ctx.lineTo(x + 90, y + 138); ctx.closePath(); ctx.fill();
+                ctx.fillStyle = '#020305';
+                ctx.beginPath(); ctx.moveTo(x + 60, y + 138); ctx.lineTo(x + 60, y + 102);
+                ctx.arc(x + 72, y + 102, 12, Math.PI, 0); ctx.lineTo(x + 84, y + 138); ctx.closePath(); ctx.fill();
+                // Pedras do arco
+                for (let i = 0; i <= 6; i++) {
+                    const a = Math.PI + i * Math.PI / 6;
+                    const px = x + 72 + Math.cos(a) * 34, py = y + 94 + Math.sin(a) * 34;
+                    ctx.fillStyle = i % 2 ? '#6b7280' : '#9ca3af';
+                    ctx.fillRect(px - 6, py - 6, 12, 11);
+                    ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = 1; ctx.strokeRect(px - 6, py - 6, 12, 11);
+                }
+                ctx.fillStyle = '#9ca3af'; ctx.fillRect(x + 32, y + 128, 14, 10); ctx.fillRect(x + 98, y + 128, 14, 10);
+                ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.strokeRect(x + 32, y + 128, 14, 10); ctx.strokeRect(x + 98, y + 128, 14, 10);
+                // Vegetação: musgo/capim e um arbusto
+                [[20,100],[124,94],[40,34],[102,28],[12,128],[130,130],[70,18]].forEach(([gx, gy], i) => {
+                    ctx.fillStyle = i % 2 ? '#15803d' : '#22c55e';
+                    ctx.beginPath(); ctx.moveTo(x + gx - 4, y + gy + 4); ctx.lineTo(x + gx - 1, y + gy - 6);
+                    ctx.lineTo(x + gx + 2, y + gy + 4); ctx.lineTo(x + gx + 5, y + gy - 4); ctx.lineTo(x + gx + 7, y + gy + 4); ctx.closePath(); ctx.fill();
+                });
+                ctx.fillStyle = '#166534'; ctx.beginPath(); ctx.arc(x + 17, y + 122, 7, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#22c55e'; ctx.beginPath(); ctx.arc(x + 15, y + 119, 3.5, 0, Math.PI*2); ctx.fill();
+            } else if (id === 'castelo') {
+                ctx.fillStyle = 'rgba(0,0,0,0.2)';
+                ctx.beginPath(); ctx.ellipse(x + w/2, y + h - 4, w/2 - 10, 8, 0, 0, Math.PI*2); ctx.fill();
+                // Corpo central
+                ctx.fillStyle = '#475569'; ctx.fillRect(x + 16, y + 16, w - 32, h - 32);
+                ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 1;
+                for (let ly = y + 24; ly < y + h - 16; ly += 12) { ctx.beginPath(); ctx.moveTo(x + 16, ly); ctx.lineTo(x + w - 16, ly); ctx.stroke(); }
+                // Torres nos 4 cantos com telhados cônicos
+                const corners = [[x, y], [x + w - 48, y], [x, y + h - 48], [x + w - 48, y + h - 48]];
+                corners.forEach(([cx, cy]) => {
+                    ctx.fillStyle = '#64748b'; ctx.fillRect(cx, cy, 48, 48);
+                    ctx.fillStyle = '#334155'; ctx.fillRect(cx + 4, cy + 4, 8, 8); ctx.fillRect(cx + 36, cy + 4, 8, 8);
+                    ctx.fillStyle = '#7f1d1d';
+                    ctx.beginPath(); ctx.moveTo(cx - 2, cy); ctx.lineTo(cx + 24, cy - 20); ctx.lineTo(cx + 50, cy); ctx.fill();
+                });
+                // Bandeiras
+                ctx.fillStyle = '#ef4444'; ctx.fillRect(x + 20, y - 10, 8, 12); ctx.fillRect(x + w - 28, y - 10, 8, 12);
+                ctx.fillStyle = '#94a3b8'; ctx.fillRect(x + 22, y - 14, 1.5, 16); ctx.fillRect(x + w - 26, y - 14, 1.5, 16);
+                // Portão central em arco
+                ctx.fillStyle = '#1e293b';
+                ctx.beginPath(); ctx.moveTo(x + w/2 - 18, y + h); ctx.lineTo(x + w/2 - 18, y + h - 28); ctx.arc(x + w/2, y + h - 28, 18, Math.PI, 0); ctx.lineTo(x + w/2 + 18, y + h); ctx.fill();
+                ctx.fillStyle = '#5c3010';
+                ctx.beginPath(); ctx.moveTo(x + w/2 - 14, y + h); ctx.lineTo(x + w/2 - 14, y + h - 26); ctx.arc(x + w/2, y + h - 26, 14, Math.PI, 0); ctx.lineTo(x + w/2 + 14, y + h); ctx.fill();
+            } else if (id === 'arqueiro' || id === 'cavaleiro' || id === 'piqueiro' || id === 'besteiro' || id === 'npc_cidadao' || id === 'npc_guarda' || id === 'npc_comerciante') {
+                const colors = {
+                    arqueiro: '#38bdf8', cavaleiro: '#ef4444', piqueiro: '#a855f7', besteiro: '#f97316',
+                    npc_cidadao: '#84cc16', npc_guarda: '#64748b', npc_comerciante: '#eab308'
+                };
+                const skin = '#eab68b';
+                const c = colors[id] || '#38bdf8';
+                ctx.fillStyle = 'rgba(0,0,0,0.2)';
+                ctx.beginPath(); ctx.ellipse(x + w/2, y + h - 4, 10, 4, 0, 0, Math.PI*2); ctx.fill();
+                // Pernas
+                ctx.fillStyle = '#1e293b'; ctx.fillRect(x + w/2 - 6, y + h - 16, 5, 12); ctx.fillRect(x + w/2 + 1, y + h - 16, 5, 12);
+                // Corpo (tabardo colorido)
+                ctx.fillStyle = c; ctx.fillRect(x + w/2 - 9, y + h/2 - 4, 18, 20);
+                ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = 1; ctx.strokeRect(x + w/2 - 9, y + h/2 - 4, 18, 20);
+                // Braços
+                ctx.fillStyle = c; ctx.fillRect(x + w/2 - 13, y + h/2 - 2, 4, 14); ctx.fillRect(x + w/2 + 9, y + h/2 - 2, 4, 14);
+                // Cabeça
+                ctx.fillStyle = skin; ctx.beginPath(); ctx.arc(x + w/2, y + h/2 - 10, 7, 0, Math.PI*2); ctx.fill();
+                if (id === 'arqueiro') {
+                    ctx.strokeStyle = '#78350f'; ctx.lineWidth = 2;
+                    ctx.beginPath(); ctx.arc(x + w/2 + 14, y + h/2 + 4, 10, -Math.PI/2.3, Math.PI/2.3); ctx.stroke();
+                    ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 1;
+                    ctx.beginPath(); ctx.moveTo(x + w/2 + 14, y + h/2 - 6); ctx.lineTo(x + w/2 + 14, y + h/2 + 14); ctx.stroke();
+                    ctx.fillStyle = '#facc15'; ctx.fillRect(x + w/2 - 2, y + h/2 - 12, 12, 8); // capacete simples
+                } else if (id === 'cavaleiro') {
+                    ctx.fillStyle = '#cbd5e1'; ctx.fillRect(x + w/2 - 8, y + h/2 - 15, 16, 7); // elmo
+                    ctx.fillStyle = '#e2e8f0'; ctx.fillRect(x + w/2 - 13, y + h/2 - 2, 10, 16); // escudo
+                    ctx.strokeStyle = '#334155'; ctx.strokeRect(x + w/2 - 13, y + h/2 - 2, 10, 16);
+                    ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2;
+                    ctx.beginPath(); ctx.moveTo(x + w/2 + 9, y + h/2 - 8); ctx.lineTo(x + w/2 + 16, y + h/2 - 22); ctx.stroke();
+                } else if (id === 'piqueiro') {
+                    ctx.fillStyle = '#7e22ce'; ctx.fillRect(x + w/2 - 6, y + h/2 - 14, 12, 6); // capacete
+                    ctx.strokeStyle = '#78350f'; ctx.lineWidth = 2;
+                    ctx.beginPath(); ctx.moveTo(x + w/2, y + h/2 - 24); ctx.lineTo(x + w/2, y + h - 4); ctx.stroke();
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.beginPath(); ctx.moveTo(x + w/2 - 4, y + h/2 - 24); ctx.lineTo(x + w/2, y + h/2 - 34); ctx.lineTo(x + w/2 + 4, y + h/2 - 24); ctx.fill();
+                } else if (id === 'besteiro') {
+                    ctx.fillStyle = '#c2410c'; ctx.fillRect(x + w/2 - 6, y + h/2 - 14, 12, 6); // capacete
+                    ctx.strokeStyle = '#451a03'; ctx.lineWidth = 3;
+                    ctx.beginPath(); ctx.moveTo(x + w/2 + 6, y + h/2 - 2); ctx.lineTo(x + w/2 + 20, y + h/2 - 2); ctx.stroke();
+                    ctx.strokeStyle = '#78350f'; ctx.lineWidth = 2;
+                    ctx.beginPath(); ctx.moveTo(x + w/2 + 8, y + h/2 - 8); ctx.lineTo(x + w/2 + 18, y + h/2 + 4); ctx.stroke();
+                } else if (id === 'npc_cidadao') {
+                    ctx.fillStyle = '#4d7c0f'; ctx.fillRect(x + w/2 - 6, y + h/2 - 13, 12, 5); // chapéu simples de aba
+                } else if (id === 'npc_guarda') {
+                    ctx.fillStyle = '#334155'; ctx.fillRect(x + w/2 - 7, y + h/2 - 15, 14, 6); // elmo simples
+                    ctx.strokeStyle = '#78350f'; ctx.lineWidth = 2;
+                    ctx.beginPath(); ctx.moveTo(x + w/2 + 12, y + h/2 - 20); ctx.lineTo(x + w/2 + 12, y + h - 4); ctx.stroke(); // lança
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.beginPath(); ctx.moveTo(x + w/2 + 9, y + h/2 - 20); ctx.lineTo(x + w/2 + 12, y + h/2 - 28); ctx.lineTo(x + w/2 + 15, y + h/2 - 20); ctx.fill();
+                } else if (id === 'npc_comerciante') {
+                    ctx.fillStyle = '#78350f';
+                    ctx.beginPath(); ctx.arc(x + w/2 - 13, y + h/2 + 9, 6, 0, Math.PI*2); ctx.fill(); // saco de mercadorias
+                    ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 1; ctx.stroke();
+                    ctx.fillStyle = '#fde047';
+                    ctx.beginPath(); ctx.arc(x + w/2 - 13, y + h/2 + 9, 2, 0, Math.PI*2); ctx.fill(); // moeda
+                }
+            }
+        }
+
+        // Minimapa 5x5 — clicável: clique em qualquer célula navega direto para aquele setor
+        function updateMinimap() {
+            const minimap = document.getElementById('minimap');
+            minimap.innerHTML = '';
+
+            for (let my = -2; my <= 2; my++) {
+                for (let mx = -2; mx <= 2; mx++) {
+                    const sx = currentSectorX + mx;
+                    const sy = currentSectorY + my;
+                    const key = getSectorKey(sx, sy);
+                    const cellDiv = document.createElement('div');
+
+                    const isCurrent = (mx === 0 && my === 0);
+                    const exists = !!worldSectors[key];
+
+                    cellDiv.className = `w-full h-full rounded-sm transition-colors hover:brightness-125 ${
+                        isCurrent ? 'bg-sky-500 border border-white' : exists ? 'bg-emerald-800 hover:bg-emerald-600' : 'bg-slate-900 border border-slate-800 hover:bg-slate-700'
+                    }`;
+                    cellDiv.style.cursor = 'pointer';
+                    cellDiv.title = `Ir para o setor (${sx}, ${sy})`;
+                    cellDiv.onclick = () => {
+                        if (isCurrent) return; // já está aqui
+                        currentSectorX = sx;
+                        currentSectorY = sy;
+                        updateSectorUI();
+                    };
+                    minimap.appendChild(cellDiv);
+                }
+            }
+        }
+
+        // -------------------------------------------------------------
+        // ZOOM — escala visual do canvas via CSS transform (a resolução interna
+        // de desenho continua 576x576; por isso todo o resto do editor — pintura,
+        // seleção, prévia, setores — não precisa saber que o zoom existe).
+        // -------------------------------------------------------------
+        let zoomLevel = 1;
+        const ZOOM_MIN = 0.5, ZOOM_MAX = 2.5, ZOOM_STEP = 0.25;
+
+        function applyZoom() {
+            const size = CELL_SIZE * GRID_SIZE * zoomLevel;
+            canvas.style.transform = `scale(${zoomLevel})`;
+            const scaler = document.getElementById('canvasScaler');
+            if (scaler) { scaler.style.width = size + 'px'; scaler.style.height = size + 'px'; }
+            const lbl = document.getElementById('zoomLabel');
+            if (lbl) lbl.innerText = Math.round(zoomLevel * 100) + '%';
+        }
+
+        // focalClientX/Y (opcional): ponto da tela que deve permanecer fixo visualmente
+        // enquanto o zoom muda (evita "saltos" ao usar a roda do mouse).
+        function setZoom(newZoom, focalClientX, focalClientY) {
+            const clamped = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, newZoom));
+            if (clamped === zoomLevel) return;
+
+            const viewport = document.getElementById('canvasViewport');
+            if (viewport && focalClientX !== undefined) {
+                const rect = viewport.getBoundingClientRect();
+                const offsetX = focalClientX - rect.left + viewport.scrollLeft;
+                const offsetY = focalClientY - rect.top + viewport.scrollTop;
+                const ratio = clamped / zoomLevel;
+                zoomLevel = clamped;
+                applyZoom();
+                viewport.scrollLeft = offsetX * ratio - (focalClientX - rect.left);
+                viewport.scrollTop = offsetY * ratio - (focalClientY - rect.top);
+            } else {
+                zoomLevel = clamped;
+                applyZoom();
+            }
+        }
+
+        document.getElementById('btnZoomIn').onclick = () => setZoom(zoomLevel + ZOOM_STEP);
+        document.getElementById('btnZoomOut').onclick = () => setZoom(zoomLevel - ZOOM_STEP);
+        document.getElementById('btnZoomReset').onclick = () => setZoom(1);
+
+        document.getElementById('canvasViewport').addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const delta = e.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP;
+            setZoom(zoomLevel + delta, e.clientX, e.clientY);
+        }, { passive: false });
+
+        applyZoom(); // estado inicial (100%)
+
+        // -------------------------------------------------------------
+        // EVENTOS DO MOUSE — despacha para a ferramenta ativa
+        // -------------------------------------------------------------
+        let isMouseDown = false;
+
+        function getCellFromEvent(e) {
+            const rect = canvas.getBoundingClientRect();
+            const col = Math.floor((e.clientX - rect.left) / (rect.width / GRID_SIZE));
+            const row = Math.floor((e.clientY - rect.top) / (rect.height / GRID_SIZE));
+            return { col, row };
+        }
+
+        // -------------------------------------------------------------
+        // PAN (arrastar o mapa) — Espaço+arraste ou botão do meio do mouse.
+        // Não usa nenhuma ferramenta de edição; apenas rola o contêiner do canvas.
+        // -------------------------------------------------------------
+        let spacePressed = false;
+        let isPanning = false;
+        let panStart = { x: 0, y: 0, scrollLeft: 0, scrollTop: 0 };
+
+        function isPanTrigger(e) {
+            return spacePressed || e.button === 1; // barra de espaço ou botão do meio
+        }
+
+        function startPanning(e) {
+            isPanning = true;
+            const viewport = document.getElementById('canvasViewport');
+            panStart = { x: e.clientX, y: e.clientY, scrollLeft: viewport.scrollLeft, scrollTop: viewport.scrollTop };
+            canvas.style.cursor = 'grabbing';
+        }
+
+        function updatePanning(e) {
+            const viewport = document.getElementById('canvasViewport');
+            viewport.scrollLeft = panStart.scrollLeft - (e.clientX - panStart.x);
+            viewport.scrollTop = panStart.scrollTop - (e.clientY - panStart.y);
+        }
+
+        function stopPanning() {
+            if (!isPanning) return;
+            isPanning = false;
+            canvas.style.cursor = spacePressed ? 'grab' : 'crosshair';
+        }
+
+        canvas.onmousedown = (e) => {
+            if (isPanTrigger(e)) {
+                e.preventDefault();
+                startPanning(e);
+                return; // não despacha nenhuma ferramenta de edição enquanto estiver arrastando o mapa
+            }
+
+            if (isMapReadOnly()) { playBeep(120); return; } // Modo de Teste ou Modo de Visualização: mapa é somente-leitura
+
+            isMouseDown = true;
+            const { col, row } = getCellFromEvent(e);
+            if (col < 0 || col >= GRID_SIZE || row < 0 || row >= GRID_SIZE) return;
+
+            if (currentTool === 'select') {
+                handleSelectMouseDown(col, row);
+            } else if (currentTool === 'bucket') {
+                beginHistoryAction();
+                floodFillTerrain(col, row);
+                commitHistoryAction();
+            } else if (currentTool === 'eyedropper') {
+                pickFromCell(col, row);
+            } else {
+                beginHistoryAction();
+                paintAt(col, row);
+            }
+        };
+
+        canvas.onmousemove = (e) => {
+            if (isPanning) { updatePanning(e); return; }
+
+            const { col, row } = getCellFromEvent(e);
+            hoverCol = col; hoverRow = row;
+
+            if (!isMouseDown) return;
+            if (col < 0 || col >= GRID_SIZE || row < 0 || row >= GRID_SIZE) return;
+
+            if (currentTool === 'paint') {
+                paintAt(col, row);
+            }
+            // 'select' (arrastando) e 'bucket'/'eyedropper' (clique único) não pintam em arraste;
+            // a prévia do arraste de seleção é desenhada em drawToolOverlay() a partir de hoverCol/Row.
+        };
+
+        canvas.onmouseleave = () => { hoverCol = -1; hoverRow = -1; };
+
+        window.onmouseup = () => {
+            if (isPanning) { stopPanning(); isMouseDown = false; return; }
+            if (currentTool === 'select' && isDraggingSelection) {
+                commitSelectionMove();
+            } else if (currentTool === 'paint' && actionSnapshot) {
+                commitHistoryAction();
+            }
+            isMouseDown = false;
+        };
+
+        // Impede o menu de contexto do botão do meio ao usar o pan
+        canvas.addEventListener('auxclick', (e) => { if (e.button === 1) e.preventDefault(); });
+        canvas.addEventListener('mousedown', (e) => { if (e.button === 1) e.preventDefault(); });
+
+        // Duplo clique em uma estrutura Dungeon abre o editor de interior separado.
+        // O alvo é lido pela posição real do evento para evitar depender de uma seleção antiga.
+        canvas.addEventListener('dblclick', (e) => {
+            if (isMapReadOnly() || currentTool !== 'select') return;
+
+            const { col, row } = getCellFromEvent(e);
+            if (col < 0 || col >= GRID_SIZE || row < 0 || row >= GRID_SIZE) return;
+
+            const sector = peekSector(currentSectorX, currentSectorY);
+            const obj = getObjectAt(sector, col, row);
+            if (!obj || (obj.type !== 'dungeon' && obj.id !== 'dungeon')) return;
+
+            if (typeof obj.dungeonId !== 'string' || !obj.dungeonId.trim()) {
+                // Recuperação defensiva: normalmente os IDs já foram atribuídos na criação/carregamento.
+                assignMissingDungeonIds();
+            }
+            if (typeof obj.dungeonId !== 'string' || !obj.dungeonId.trim()) {
+                alert('Não foi possível identificar esta Dungeon. Salve o projeto e tente novamente.');
+                return;
+            }
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Salva agora, sem depender do temporizador de autosave de 2 segundos.
+            if (autosaveTimer) {
+                clearTimeout(autosaveTimer);
+                autosaveTimer = null;
+            }
+            performAutosave();
+
+            const params = new URLSearchParams();
+            params.set('id', obj.dungeonId);
+            params.set('returnTo', './criador_de_mapas_rpg_16_bit.html');
+            params.set('sx', String(currentSectorX));
+            params.set('sy', String(currentSectorY));
+            params.set('px', String(obj.x));
+            params.set('py', String(obj.y));
+            window.location.href = './rpg_dungeon_editor.html?' + params.toString();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                const tag = (document.activeElement && document.activeElement.tagName) || '';
+                if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+                if (!spacePressed) { spacePressed = true; canvas.style.cursor = 'grab'; }
+                e.preventDefault(); // evita rolar a página inteira
+            }
+        });
+        document.addEventListener('keyup', (e) => {
+            if (e.code === 'Space') {
+                spacePressed = false;
+                if (!isPanning) canvas.style.cursor = 'crosshair';
+            }
+        });
+
+        // Pintura de terreno (com pincel NxN), colocação de objeto, ou remoção completa da entidade.
+        function paintAt(col, row) {
+            const sector = getOrCreateSector(currentSectorX, currentSectorY);
+
+            if (selectedElement.type === 'terrain') {
+                if (layerLocked.terreno) { playBeep(100); return; } // camada de terreno bloqueada para edição
+                const half = Math.floor(brushSize / 2);
+                for (let dr = -half; dr < brushSize - half; dr++) {
+                    for (let dc = -half; dc < brushSize - half; dc++) {
+                        const rr = row + dr, cc = col + dc;
+                        if (rr >= 0 && rr < GRID_SIZE && cc >= 0 && cc < GRID_SIZE) {
+                            sector.terrain[rr][cc] = selectedElement.id;
+                        }
+                    }
+                }
+                playBeep(550);
+            } else if (selectedElement.type === 'clear') {
+                // Remove a entidade inteira que ocupa a célula (não só o "pixel" clicado)
+                const target = getObjectAt(sector, col, row);
+                if (target) {
+                    if (layerLocked[target.layer]) { playBeep(100); return; } // camada do objeto bloqueada
+                    sector.objects = sector.objects.filter(o => o.uid !== target.uid);
+                    playBeep(200);
+                } else {
+                    playBeep(150); // nada para apagar aqui
+                }
+            } else {
+                // Colocação de objeto/unidade/estrutura customizada como entidade real (sempre 1 por clique)
+                const targetLayer = defaultLayerFor(selectedElement.id, selectedElement.type);
+                if (layerLocked[targetLayer]) { playBeep(100); return; } // camada de destino bloqueada
+
+                const w = selectedElement.w || 1;
+                const h = selectedElement.h || 1;
+
+                if (!isAreaFree(sector, col, row, w, h)) {
+                    playBeep(120); // posição inválida: fora da grade ou sobrepondo outro objeto
+                    return;
+                }
+
+                const newEntity = {
+                    uid: generateUid(),
+                    id: selectedElement.id,
+                    type: selectedElement.type,
+                    x: col, y: row, w: w, h: h,
+                    layer: targetLayer,
+                    rotation: 0,
+                    collisionType: defaultCollisionFor(selectedElement.id, selectedElement.type),
+                    customImg: selectedElement.customImg || null
+                };
+                // Unidades/NPCs recebem automaticamente seus atributos padrão (name/hp/maxHp/attack/defense/range/faction).
+                const stats = defaultStatsFor(newEntity.id, newEntity.type);
+                if (stats) Object.assign(newEntity, stats);
+                if (newEntity.type === 'dungeon') newEntity.dungeonId = generateDungeonId(); // id único por dungeon
+
+                sector.objects.push(newEntity);
+                playBeep(650);
+            }
+        }
+
+        // Balde de tinta: preenche por flood-fill (4 direções) toda a região contígua
+        // do mesmo terreno pelo terreno selecionado na paleta.
+        function floodFillTerrain(startCol, startRow) {
+            if (selectedElement.type !== 'terrain') { playBeep(120); return; } // balde só pinta terreno
+            if (layerLocked.terreno) { playBeep(100); return; } // camada de terreno bloqueada para edição
+            const sector = getOrCreateSector(currentSectorX, currentSectorY);
+            const targetType = sector.terrain[startRow][startCol];
+            const newType = selectedElement.id;
+            if (newType === targetType) { playBeep(150); return; }
+
+            const stack = [[startCol, startRow]];
+            const visited = new Set();
+            while (stack.length) {
+                const [c, r] = stack.pop();
+                const key = c + ',' + r;
+                if (visited.has(key)) continue;
+                if (c < 0 || c >= GRID_SIZE || r < 0 || r >= GRID_SIZE) continue;
+                if (sector.terrain[r][c] !== targetType) continue;
+                visited.add(key);
+                sector.terrain[r][c] = newType;
+                stack.push([c + 1, r], [c - 1, r], [c, r + 1], [c, r - 1]);
+            }
+            playBeep(700);
+        }
+
+        // Conta-gotas: captura o terreno OU o objeto sob o cursor e já deixa selecionado
+        // na paleta, pronto para pintar (volta automaticamente para a ferramenta Pintar).
+        function pickFromCell(col, row) {
+            const sector = getOrCreateSector(currentSectorX, currentSectorY);
+            const obj = getObjectAt(sector, col, row);
+            const label = document.getElementById('activeElementLabel');
+            if (obj) {
+                selectedElement = { id: obj.id, type: obj.type, w: obj.w, h: obj.h, customImg: obj.customImg || null, label: obj.id };
+                highlightPaletteButton(obj.id);
+                if (label) label.innerText = obj.id + ' (via conta-gotas)';
+            } else {
+                const terrainId = sector.terrain[row][col];
+                selectedElement = { id: terrainId, type: 'terrain', w: 1, h: 1, label: terrainId };
+                highlightPaletteButton(terrainId);
+                if (label) label.innerText = terrainId + ' (via conta-gotas)';
+            }
+            setTool('paint');
+            playBeep(900);
+        }
+
+        // -------------------------------------------------------------
+        // FERRAMENTA SELECIONAR: clique seleciona, arraste move, valida ocupação
+        // -------------------------------------------------------------
+        function handleSelectMouseDown(col, row) {
+            const sector = getOrCreateSector(currentSectorX, currentSectorY);
+            const obj = getObjectAt(sector, col, row);
+            if (obj) {
+                if (layerLocked[obj.layer]) {
+                    // Ainda mostra a seleção (pra ver de qual objeto se trata), mas não permite arrastar
+                    selectedObjectRef = { uid: obj.uid };
+                    isDraggingSelection = false;
+                    updateSelectionUI();
+                    playBeep(100);
+                    return;
+                }
+                selectedObjectRef = { uid: obj.uid };
+                isDraggingSelection = true;
+                dragOffset = { x: col - obj.x, y: row - obj.y };
+                beginHistoryAction(); // snapshot ANTES de mover; commit ocorre no mouseup
+                updateSelectionUI();
+                playBeep(500);
+            } else {
+                selectedObjectRef = null;
+                isDraggingSelection = false;
+                updateSelectionUI();
+            }
+        }
+
+        function commitSelectionMove() {
+            isDraggingSelection = false;
+            if (!selectedObjectRef) { actionSnapshot = null; return; }
+            const sector = getOrCreateSector(currentSectorX, currentSectorY);
+            const obj = sector.objects.find(o => o.uid === selectedObjectRef.uid);
+            if (!obj || layerLocked[obj.layer]) { actionSnapshot = null; return; } // segurança extra
+
+            const newX = Math.min(Math.max(hoverCol - dragOffset.x, 0), GRID_SIZE - obj.w);
+            const newY = Math.min(Math.max(hoverRow - dragOffset.y, 0), GRID_SIZE - obj.h);
+
+            if ((newX !== obj.x || newY !== obj.y) && isAreaFree(sector, newX, newY, obj.w, obj.h, obj.uid)) {
+                obj.x = newX; obj.y = newY;
+                playBeep(650);
+            } else if (newX !== obj.x || newY !== obj.y) {
+                playBeep(120); // posição inválida: mantém onde estava
+            }
+            commitHistoryAction();
+        }
+
+        // -------------------------------------------------------------
+        // COPIAR / COLAR / APAGAR / DESFAZER / REFAZER (teclado)
+        // -------------------------------------------------------------
+        function pasteClipboard() {
+            if (!clipboardEntity) return;
+            if (layerLocked[clipboardEntity.layer]) { playBeep(100); return; } // camada de destino bloqueada
+            const sector = getOrCreateSector(currentSectorX, currentSectorY);
+            let px = hoverCol >= 0 ? hoverCol : 0;
+            let py = hoverRow >= 0 ? hoverRow : 0;
+            px = Math.min(Math.max(px, 0), GRID_SIZE - clipboardEntity.w);
+            py = Math.min(Math.max(py, 0), GRID_SIZE - clipboardEntity.h);
+
+            if (!isAreaFree(sector, px, py, clipboardEntity.w, clipboardEntity.h)) {
+                playBeep(120);
+                return;
+            }
+            beginHistoryAction();
+            const newObj = { ...clipboardEntity, uid: generateUid(), x: px, y: py };
+            if (newObj.type === 'dungeon') newObj.dungeonId = generateDungeonId();
+            sector.objects.push(newObj);
+            selectedObjectRef = { uid: newObj.uid };
+            commitHistoryAction();
+            updateSelectionUI();
+            playBeep(650);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            const tag = (document.activeElement && document.activeElement.tagName) || '';
+            if (tag === 'INPUT' || tag === 'TEXTAREA') return; // não interferir em campos de texto
+
+            const ctrlOrCmd = e.ctrlKey || e.metaKey;
+
+            if (ctrlOrCmd && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+                e.preventDefault(); undoAction();
+            } else if (ctrlOrCmd && (e.key.toLowerCase() === 'y' || (e.shiftKey && e.key.toLowerCase() === 'z'))) {
+                e.preventDefault(); redoAction();
+            } else if (ctrlOrCmd && e.key.toLowerCase() === 'c') {
+                if (currentTool === 'select' && selectedObjectRef) {
+                    const sector = getOrCreateSector(currentSectorX, currentSectorY);
+                    const obj = sector.objects.find(o => o.uid === selectedObjectRef.uid);
+                    if (obj) {
+                        clipboardEntity = { ...obj };
+                        delete clipboardEntity.uid;
+                        playBeep(750);
+                    }
+                }
+            } else if (ctrlOrCmd && e.key.toLowerCase() === 'v') {
+                if (clipboardEntity && !isMapReadOnly()) { e.preventDefault(); pasteClipboard(); }
+            } else if ((e.key === 'Delete' || e.key === 'Backspace') && currentTool === 'select' && selectedObjectRef) {
+                e.preventDefault();
+                if (isMapReadOnly()) { playBeep(120); return; } // Modo de Teste ou Modo de Visualização: mapa é somente-leitura
+                const sectorChk = getOrCreateSector(currentSectorX, currentSectorY);
+                const objChk = sectorChk.objects.find(o => o.uid === selectedObjectRef.uid);
+                if (!objChk || layerLocked[objChk.layer]) { playBeep(100); return; } // camada bloqueada
+                beginHistoryAction();
+                sectorChk.objects = sectorChk.objects.filter(o => o.uid !== selectedObjectRef.uid);
+                selectedObjectRef = null;
+                commitHistoryAction();
+                updateSelectionUI();
+                playBeep(200);
+            } else if (e.key === 'Escape') {
+                selectedObjectRef = null;
+                isDraggingSelection = false;
+                updateSelectionUI();
+            }
+        });
+
+        // Movimentação do personagem de teste (Parte 3D-2/3D-3) — listener independente,
+        // só age quando o Modo de Teste está ativo. Não usa selectedObjectRef; move
+        // apenas o estado temporário testPlayer, sem tocar em worldSectors. A partir
+        // da 3D-3, respeita o sistema de colisão JÁ EXISTENTE (getCellCollision) —
+        // nenhuma tabela ou regra nova foi criada.
+        document.addEventListener('keydown', (e) => {
+            if (!testMode || !testPlayer) return;
+            const tag = (document.activeElement && document.activeElement.tagName) || '';
+            if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+            let dx = 0, dy = 0;
+            if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') dy = -1;
+            else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') dy = 1;
+            else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') dx = -1;
+            else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') dx = 1;
+            else return;
+
+            e.preventDefault();
+            const newX = Math.min(GRID_SIZE - 1, Math.max(0, testPlayer.x + dx));
+            const newY = Math.min(GRID_SIZE - 1, Math.max(0, testPlayer.y + dy));
+            if (newX === testPlayer.x && newY === testPlayer.y) return; // já estava na borda, nem tenta
+
+            const sector = peekSector(currentSectorX, currentSectorY);
+            // getCellCollision() já existe (Parte 2): olha o objeto por cima da célula
+            // (árvore/construção/unidade/NPC/etc.) e, se não houver nenhum, cai pro
+            // terreno (TERRAIN_COLLISION_MAP). Nenhuma lista paralela é criada aqui.
+            if (getCellCollision(sector, newX, newY) !== 'andavel') {
+                playBeep(150); // célula bloqueada/água/especial: personagem não se move
+                return;
+            }
+
+            testPlayer = { x: newX, y: newY };
+        });
+
+        // -------------------------------------------------------------
+        // INTERAÇÃO DO PERSONAGEM DE TESTE (Parte 3D-4) — só consulta informação,
+        // nunca altera worldSectors, testPlayer, nem qualquer atributo da unidade/NPC.
+        // -------------------------------------------------------------
+        let interactionHideTimer = null;
+        const FACTION_LABELS = { aliado: 'Aliado', inimigo: 'Inimigo', neutro: 'Neutro', comerciante: 'Comerciante' };
+        const ENTITY_TYPE_LABELS = { unit: 'Unidade', npc: 'NPC' };
+
+        function showInteractionPanel(html) {
+            const panel = document.getElementById('interactionPanel');
+            const content = document.getElementById('interactionPanelContent');
+            if (!panel || !content) return;
+            content.innerHTML = html;
+            panel.style.display = 'block';
+            if (interactionHideTimer) clearTimeout(interactionHideTimer);
+            interactionHideTimer = setTimeout(hideInteractionPanel, 4000); // desaparece sozinho depois de alguns segundos
+        }
+
+        function hideInteractionPanel() {
+            const panel = document.getElementById('interactionPanel');
+            if (panel) panel.style.display = 'none';
+            if (interactionHideTimer) { clearTimeout(interactionHideTimer); interactionHideTimer = null; }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (!testMode || !testPlayer) return; // fora do Modo de Teste, E/Espaço/Esc não mudam nada aqui
+            const tag = (document.activeElement && document.activeElement.tagName) || '';
+            if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+            if (e.key === 'Escape') {
+                hideInteractionPanel();
+                return;
+            }
+
+            if (e.key !== 'e' && e.key !== 'E' && e.key !== ' ') return;
+            e.preventDefault();
+
+            const sector = peekSector(currentSectorX, currentSectorY);
+            // Ordem fixa exigida: cima, direita, baixo, esquerda.
+            const directions = [
+                { dx: 0, dy: -1 },
+                { dx: 1, dy: 0 },
+                { dx: 0, dy: 1 },
+                { dx: -1, dy: 0 }
+            ];
+
+            let found = null;
+            for (const { dx, dy } of directions) {
+                const cx = testPlayer.x + dx, cy = testPlayer.y + dy;
+                if (cx < 0 || cx >= GRID_SIZE || cy < 0 || cy >= GRID_SIZE) continue;
+                const obj = getObjectAt(sector, cx, cy); // função já existente — só leitura
+                if (obj && (obj.type === 'unit' || obj.type === 'npc')) { found = obj; break; }
+            }
+
+            if (found) {
+                showInteractionPanel(`
+                    <div class="grid grid-cols-2 gap-x-3 gap-y-0.5">
+                        <span class="text-slate-400">Nome:</span><span class="font-semibold">${found.name || '(sem nome)'}</span>
+                        <span class="text-slate-400">Tipo:</span><span>${ENTITY_TYPE_LABELS[found.type] || found.type}</span>
+                        <span class="text-slate-400">HP:</span><span>${found.hp}/${found.maxHp}</span>
+                        <span class="text-slate-400">Ataque:</span><span>${found.attack}</span>
+                        <span class="text-slate-400">Defesa:</span><span>${found.defense}</span>
+                        <span class="text-slate-400">Alcance:</span><span>${found.range}</span>
+                        <span class="text-slate-400">Facção:</span><span>${FACTION_LABELS[found.faction] || found.faction}</span>
+                    </div>
+                `);
+                playBeep(600);
+            } else {
+                showInteractionPanel('<span class="text-slate-400">Não há ninguém para interagir aqui.</span>');
+                playBeep(200);
+            }
+        });
+
+        // Botões de ferramenta / pincel / desfazer-refazer
+        document.querySelectorAll('.tool-btn').forEach(btn => {
+            btn.onclick = () => setTool(btn.getAttribute('data-tool'));
+        });
+        document.querySelectorAll('.brush-btn').forEach(btn => {
+            btn.onclick = () => {
+                brushSize = parseInt(btn.getAttribute('data-size'), 10);
+                document.querySelectorAll('.brush-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            };
+        });
+        document.getElementById('btnUndo').onclick = undoAction;
+        document.getElementById('btnRedo').onclick = redoAction;
+
+        // Camadas: visibilidade e bloqueio de edição
+        document.querySelectorAll('.layer-vis-btn').forEach(btn => {
+            btn.onclick = () => {
+                const layer = btn.getAttribute('data-layer');
+                layerVisibility[layer] = !layerVisibility[layer];
+                updateLayerButtonsUI();
+                playBeep(layerVisibility[layer] ? 500 : 300);
+            };
+        });
+        document.querySelectorAll('.layer-lock-btn').forEach(btn => {
+            btn.onclick = () => {
+                const layer = btn.getAttribute('data-layer');
+                layerLocked[layer] = !layerLocked[layer];
+                updateLayerButtonsUI();
+                updateSelectionUI(); // se o objeto selecionado estiver nessa camada, reflete o novo estado
+                playBeep(layerLocked[layer] ? 250 : 550);
+            };
+        });
+        updateLayerButtonsUI();
+
+        // Overlay de colisão (só visualização, não altera dados)
+        document.getElementById('chkShowCollision').onchange = (e) => {
+            showCollisionOverlay = e.target.checked;
+        };
+
+        // Colisão do objeto selecionado
+        document.getElementById('selectObjectCollision').onchange = (e) => {
+            if (isMapReadOnly()) { updateSelectionUI(); return; } // Modo de Teste ou Modo de Visualização: mapa é somente-leitura
+            if (!selectedObjectRef) return;
+            const sector = getOrCreateSector(currentSectorX, currentSectorY);
+            const obj = sector.objects.find(o => o.uid === selectedObjectRef.uid);
+            if (!obj || layerLocked[obj.layer]) { updateSelectionUI(); return; }
+            beginHistoryAction();
+            obj.collisionType = e.target.value;
+            commitHistoryAction();
+            updateSelectionUI();
+            playBeep(600);
+        };
+
+        // Propriedades da Unidade/NPC selecionada — texto/número confirmam ao sair do campo
+        // (blur), select confirma na hora (change), pra não gerar uma entrada de histórico
+        // por tecla digitada.
+        document.getElementById('inputUnitName').addEventListener('blur', (e) => {
+            commitUnitPropertyChange(obj => { obj.name = e.target.value.slice(0, 40); });
+        });
+        document.getElementById('inputUnitHp').addEventListener('blur', (e) => {
+            const v = parseInt(e.target.value, 10);
+            commitUnitPropertyChange(obj => { obj.hp = Number.isNaN(v) ? 0 : Math.max(0, v); });
+            updateSelectionUI();
+        });
+        document.getElementById('inputUnitMaxHp').addEventListener('blur', (e) => {
+            const v = parseInt(e.target.value, 10);
+            commitUnitPropertyChange(obj => { obj.maxHp = Number.isNaN(v) ? 0 : Math.max(0, v); });
+            updateSelectionUI();
+        });
+        document.getElementById('inputUnitAttack').addEventListener('blur', (e) => {
+            const v = parseInt(e.target.value, 10);
+            commitUnitPropertyChange(obj => { obj.attack = Number.isNaN(v) ? 0 : Math.max(0, v); });
+            updateSelectionUI();
+        });
+        document.getElementById('inputUnitDefense').addEventListener('blur', (e) => {
+            const v = parseInt(e.target.value, 10);
+            commitUnitPropertyChange(obj => { obj.defense = Number.isNaN(v) ? 0 : Math.max(0, v); });
+            updateSelectionUI();
+        });
+        document.getElementById('inputUnitRange').addEventListener('blur', (e) => {
+            const v = parseInt(e.target.value, 10);
+            commitUnitPropertyChange(obj => { obj.range = Number.isNaN(v) ? 0 : Math.max(0, v); });
+            updateSelectionUI();
+        });
+        document.getElementById('selectUnitFaction').addEventListener('change', (e) => {
+            commitUnitPropertyChange(obj => { obj.faction = e.target.value; });
+            updateSelectionUI();
+            playBeep(600);
+        });
+
+        // Seleção na Paleta (exclui #btnUndo/#btnRedo, que têm handlers próprios e não são itens da paleta)
+        document.querySelectorAll('.palette-btn:not(#btnUndo):not(#btnRedo)').forEach(btn => {
+            btn.onclick = () => {
+                // Escolher um item da paleta enquanto a ferramenta "Selecionar" está ativa
+                // significa que o usuário quer voltar a colocar/pintar algo.
+                if (currentTool === 'select') setTool('paint');
+                document.querySelectorAll('.palette-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                selectedElement = {
+                    id: btn.getAttribute('data-id'),
+                    type: btn.getAttribute('data-type'),
+                    w: parseInt(btn.getAttribute('data-w') || '1'),
+                    h: parseInt(btn.getAttribute('data-h') || '1'),
+                    label: btn.innerText
+                };
+
+                document.getElementById('activeElementLabel').innerText = btn.innerText.replace(/^[^\s]+\s/, '');
+                playBeep(650);
+            };
+        });
+
+        // Modo de Teste (alterna edição <-> somente-leitura)
+        document.getElementById('btnTestMode').onclick = () => setTestMode(!testMode);
+        document.getElementById('btnViewMode').onclick = () => setViewMode(!viewMode);
+
+        // Som Toggle
+        document.getElementById('btnSoundToggle').onclick = () => {
+            soundEnabled = !soundEnabled;
+            document.getElementById('soundLabel').innerText = soundEnabled ? 'LIGADO' : 'DESLIGADO';
+        };
+
+        // Navegação do D-Pad
+        document.getElementById('btnNavUp').onclick = () => changeSector(0, -1);
+        document.getElementById('btnNavDown').onclick = () => changeSector(0, 1);
+        document.getElementById('btnNavLeft').onclick = () => changeSector(-1, 0);
+        document.getElementById('btnNavRight').onclick = () => changeSector(1, 0);
+        document.getElementById('btnNavCenter').onclick = () => { currentSectorX = 0; currentSectorY = 0; updateSectorUI(); };
+
+        // Ir direto para um setor (X/Y digitados)
+        function goToTypedSector() {
+            const xInput = document.getElementById('inputGoToX');
+            const yInput = document.getElementById('inputGoToY');
+            const x = parseInt(xInput.value, 10);
+            const y = parseInt(yInput.value, 10);
+            if (Number.isNaN(x) || Number.isNaN(y)) { playBeep(150); return; } // campos vazios/inválidos
+            currentSectorX = x;
+            currentSectorY = y;
+            updateSectorUI();
+        }
+        document.getElementById('btnGoToSector').onclick = goToTypedSector;
+        document.getElementById('inputGoToX').addEventListener('keydown', (e) => { if (e.key === 'Enter') goToTypedSector(); });
+        document.getElementById('inputGoToY').addEventListener('keydown', (e) => { if (e.key === 'Enter') goToTypedSector(); });
+
+        function changeSector(dx, dy) {
+            currentSectorX += dx;
+            currentSectorY += dy;
+            updateSectorUI();
+        }
+
+        function updateSectorUI() {
+            document.getElementById('sectorX').innerText = currentSectorX;
+            document.getElementById('sectorY').innerText = currentSectorY;
+            playBeep(350);
+        }
+
+        // Limpeza
+        document.getElementById('btnClearSector').onclick = () => {
+            if (isMapReadOnly()) { playBeep(120); return; } // Modo de Teste ou Modo de Visualização: mapa é somente-leitura
+            beginHistoryAction(); // mesmo padrão de histórico usado pelas outras operações destrutivas
+            const key = getSectorKey(currentSectorX, currentSectorY);
+            worldSectors[key] = createEmptySector(); // limpa o conteúdo (em vez de apagar a chave) para o commit poder clonar o estado "depois"
+            commitHistoryAction(); // também atualiza estatísticas e agenda o autosave automaticamente
+        };
+
+        document.getElementById('btnResetWorld').onclick = () => {
+            if (isMapReadOnly()) { playBeep(120); return; } // Modo de Teste ou Modo de Visualização: mapa é somente-leitura
+            if (confirm("Tem certeza que deseja resetar todo o mundo RPG?")) {
+                // "Resetar Mundo" precisa ser UMA ação atômica no histórico (1 Undo restaura
+                // tudo, 1 Redo reaplica tudo), então empacotamos o before/after de cada setor
+                // numa única entrada com "sectors", em vez de uma entrada por setor.
+                const sectorsSnapshot = {};
+                for (const key in worldSectors) {
+                    sectorsSnapshot[key] = { before: cloneSector(worldSectors[key]), after: createEmptySector() };
+                }
+                if (Object.keys(sectorsSnapshot).length > 0) {
+                    undoStack.push({ sectors: sectorsSnapshot, resetWorld: true });
+                    if (undoStack.length > HISTORY_LIMIT) undoStack.shift();
+                    redoStack = [];
+                    updateHistoryButtons();
+                }
+
+                worldSectors = {};
+                currentSectorX = 0;
+                currentSectorY = 0;
+                updateSectorUI();
+                updateWorldStats();
+                scheduleAutosave();
+            }
+        };
+
+        // -------------------------------------------------------------
+        // IMPORTAR ESTRUTURA DO CONSTRUCTION (JSON)
+        // -------------------------------------------------------------
+        const jsonInput = document.getElementById('jsonInput');
+        document.getElementById('btnImportJSON').onclick = () => jsonInput.click();
+
+        jsonInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    if (data.pixels) {
+                        importStructureFromJSON(data);
+                    } else {
+                        alert("Arquivo JSON inválido.");
+                    }
+                } catch(err) {
+                    alert("Erro ao ler o arquivo JSON.");
+                }
+            };
+            reader.readAsText(file);
+        };
+
+        function importStructureFromJSON(data) {
+            const size = data.gridSize || 16;
+            const pixels = data.pixels;
+
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = size;
+            tempCanvas.height = size;
+            const tempCtx = tempCanvas.getContext('2d');
+
+            for (let y = 0; y < size; y++) {
+                for (let x = 0; x < size; x++) {
+                    if (pixels[y][x]) {
+                        tempCtx.fillStyle = pixels[y][x];
+                        tempCtx.fillRect(x, y, 1, 1);
+                    }
+                }
+            }
+
+            const imgUrl = tempCanvas.toDataURL();
+            const uniqueId = 'custom_' + Date.now();
+
+            const container = document.getElementById('structuresContainer');
+            const newBtn = document.createElement('button');
+            newBtn.className = 'palette-btn col-span-2 border-amber-500/50 text-amber-300 active';
+            newBtn.innerHTML = `<img src="${imgUrl}" class="w-4 h-4 rounded" style="image-rendering: pixelated;"> Custom (${size}x${size})`;
+
+            document.querySelectorAll('.palette-btn').forEach(b => b.classList.remove('active'));
+
+            selectedElement = {
+                id: uniqueId,
+                type: 'custom',
+                customImg: imgUrl,
+                w: 1,
+                h: 1,
+                label: `Custom (${size}x${size})`
+            };
+
+            newBtn.onclick = () => {
+                document.querySelectorAll('.palette-btn').forEach(b => b.classList.remove('active'));
+                newBtn.classList.add('active');
+                selectedElement = {
+                    id: uniqueId,
+                    type: 'custom',
+                    customImg: imgUrl,
+                    w: 1,
+                    h: 1,
+                    label: `Custom (${size}x${size})`
+                };
+                document.getElementById('activeElementLabel').innerText = `Custom (${size}x${size})`;
+            };
+
+            container.appendChild(newBtn);
+            document.getElementById('activeElementLabel').innerText = `Custom (${size}x${size})`;
+            playBeep(800);
+            alert("Estrutura importada com sucesso!");
+        }
+
+        // Salvar / Carregar / Exportar
+        // Formato salvo desde a v2: { formatVersion: 2, sectors: { "x,y": {terrain, objects} } }
+        document.getElementById('btnSaveProject').onclick = () => {
+            const payload = { formatVersion: 2, sectors: worldSectors };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `mapa_rpg_mundo.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        };
+
+        const fileLoadProject = document.getElementById('fileLoadProject');
+        document.getElementById('btnLoadProject').onclick = () => fileLoadProject.click();
+
+        fileLoadProject.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const parsed = JSON.parse(event.target.result);
+
+                    // Detecta formato: v2 tem { formatVersion, sectors }, formato antigo é o mapa de setores puro.
+                    const rawSectors = (parsed && parsed.formatVersion === 2 && parsed.sectors) ? parsed.sectors : parsed;
+
+                    const migrated = {};
+                    let migratedCount = 0;
+                    for (const key in rawSectors) {
+                        const wasOldFormat = Array.isArray(rawSectors[key]);
+                        migrated[key] = normalizeSector(rawSectors[key]);
+                        if (wasOldFormat) migratedCount++;
+                    }
+
+                    worldSectors = migrated;
+                    assignMissingDungeonIds(); // 2ª passada: todos os setores já estão carregados
+                    currentSectorX = 0;
+                    currentSectorY = 0;
+                    undoStack = []; redoStack = []; // histórico não atravessa um carregamento manual
+                    updateHistoryButtons();
+                    updateSectorUI();
+                    updateWorldStats();
+                    scheduleAutosave(); // o autosave passa a refletir este projeto recém-carregado
+
+                    alert(migratedCount > 0
+                        ? `Projeto carregado! ${migratedCount} setor(es) do formato antigo foram migrados automaticamente.`
+                        : "Projeto do mapa carregado com sucesso!");
+                } catch(err) {
+                    console.error(err);
+                    alert("Erro ao carregar o arquivo de projeto.");
+                }
+            };
+            reader.readAsText(file);
+        };
+
+        document.getElementById('btnExportPNG').onclick = () => {
+            const link = document.createElement('a');
+            link.download = `setor_${currentSectorX}_${currentSectorY}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        };
+
+        // Exportação do mundo inteiro: junta todos os setores já existentes em uma única
+        // imagem. Reaproveita renderMap() sem modificá-la — desenha cada setor no canvas
+        // visível principal (como sempre) e copia o resultado para um canvas grande "fora
+        // da tela", depois restaura tudo exatamente como estava.
+        function exportWorldPNG() {
+            const keys = Object.keys(worldSectors);
+            if (keys.length === 0) { alert('Não há nenhum setor criado ainda para exportar.'); return; }
+
+            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+            const coords = keys.map(k => {
+                const [sx, sy] = k.split(',').map(Number);
+                minX = Math.min(minX, sx); maxX = Math.max(maxX, sx);
+                minY = Math.min(minY, sy); maxY = Math.max(maxY, sy);
+                return { x: sx, y: sy };
+            });
+
+            const sectorsWide = maxX - minX + 1;
+            const sectorsTall = maxY - minY + 1;
+            const totalCells = sectorsWide * sectorsTall;
+
+            // Limite de segurança: um mundo muito grande gera uma imagem enorme e pode travar o navegador.
+            if (totalCells > 400) {
+                const proceed = confirm(
+                    `Este mundo abrange ${sectorsWide}x${sectorsTall} setores (${totalCells} no total). ` +
+                    `A imagem final pode ficar muito grande e travar o navegador. Deseja continuar mesmo assim?`
+                );
+                if (!proceed) return;
+            }
+
+            const sectorPixelSize = GRID_SIZE * CELL_SIZE; // 576
+            const bigCanvas = document.createElement('canvas');
+            bigCanvas.width = sectorsWide * sectorPixelSize;
+            bigCanvas.height = sectorsTall * sectorPixelSize;
+            const bigCtx = bigCanvas.getContext('2d');
+            bigCtx.fillStyle = '#0f172a'; // fundo neutro para setores ainda não criados (vazios entre os existentes)
+            bigCtx.fillRect(0, 0, bigCanvas.width, bigCanvas.height);
+
+            // Guarda o estado atual da tela para restaurar depois
+            const savedX = currentSectorX, savedY = currentSectorY;
+            const savedShowCollision = showCollisionOverlay;
+            showCollisionOverlay = false; // a imagem exportada não deve incluir o overlay de colisão
+
+            for (const { x, y } of coords) {
+                currentSectorX = x;
+                currentSectorY = y;
+                renderMap(); // usa exatamente a mesma renderização já testada, sem duplicar lógica
+                const destX = (x - minX) * sectorPixelSize;
+                const destY = (y - minY) * sectorPixelSize;
+                bigCtx.drawImage(canvas, destX, destY);
+            }
+
+            // Restaura tudo como estava antes de exportar
+            currentSectorX = savedX;
+            currentSectorY = savedY;
+            showCollisionOverlay = savedShowCollision;
+            renderMap();
+
+            const link = document.createElement('a');
+            link.download = `mapa_rpg_mundo_completo.png`;
+            link.href = bigCanvas.toDataURL();
+            link.click();
+        }
+        document.getElementById('btnExportWorld').onclick = exportWorldPNG;
+
+        // -------------------------------------------------------------
+        // GERAÇÃO PROCEDURAL POR SEED
+        // -------------------------------------------------------------
+        // RNG determinístico (mulberry32): mesma seed numérica -> mesma sequência sempre.
+        function mulberry32(a) {
+            return function () {
+                a |= 0; a = (a + 0x6D2B79F5) | 0;
+                let t = Math.imul(a ^ (a >>> 15), 1 | a);
+                t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+                return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+            };
+        }
+        // Converte a seed digitada (texto) em um inteiro de 32 bits (hash FNV-1a).
+        function hashStringToInt(str) {
+            let h = 2166136261 >>> 0;
+            for (let i = 0; i < str.length; i++) {
+                h ^= str.charCodeAt(i);
+                h = Math.imul(h, 16777619);
+            }
+            return h >>> 0;
+        }
+        // Combina a seed global com as coordenadas do setor: mesma seed em setores
+        // diferentes dá resultados diferentes, mas o MESMO setor com a MESMA seed
+        // sempre gera exatamente o mesmo resultado, não importa quantas vezes.
+        function combineSeed(baseSeedInt, sx, sy) {
+            let h = baseSeedInt >>> 0;
+            h = Math.imul(h ^ Math.imul(sx, 0x9E3779B1), 0x85EBCA6B) >>> 0;
+            h = Math.imul(h ^ Math.imul(sy, 0xC2B2AE35), 0x27D4EB2F) >>> 0;
+            h ^= h >>> 15;
+            return h >>> 0;
+        }
+
+        // Ruído de valor simples: lattice de pontos de controle aleatórios + interpolação suave.
+        // Não é Perlin/Simplex de verdade, mas dá manchas orgânicas de bioma sem precisar de biblioteca externa.
+        function buildLattice(rng, size) {
+            const lattice = [];
+            for (let i = 0; i <= size; i++) {
+                const row = [];
+                for (let j = 0; j <= size; j++) row.push(rng());
+                lattice.push(row);
+            }
+            return lattice;
+        }
+        function smoothstep(t) { return t * t * (3 - 2 * t); }
+        function sampleLattice(lattice, size, u, v) {
+            const fx = u * size, fy = v * size;
+            const x0 = Math.floor(fx), y0 = Math.floor(fy);
+            const x1 = Math.min(x0 + 1, size), y1 = Math.min(y0 + 1, size);
+            const tx = smoothstep(fx - x0), ty = smoothstep(fy - y0);
+            const a = lattice[y0][x0], b = lattice[y0][x1];
+            const c = lattice[y1][x0], d = lattice[y1][x1];
+            const top = a + (b - a) * tx;
+            const bottom = c + (d - c) * tx;
+            return top + (bottom - top) * ty;
+        }
+
+        // Decide o terreno a partir de 3 canais de ruído: elevação (e), umidade (m) e temperatura (t).
+        // Usa só ids de terreno que já existem no editor (nenhum tipo novo é criado).
+        function pickBiomeTerrain(e, m, t) {
+            if (e < 0.30) return t < 0.25 ? 'agua_congelada' : 'agua';               // água
+            if (e < 0.35) return (m > 0.6 && t > 0.5) ? 'manguezal' : 'areia_praia'; // faixa costeira
+            if (e > 0.82) return t < 0.35 ? 'neve' : (m > 0.5 ? 'pedra' : 'rocha');  // elevação alta
+            if (t < 0.30) return m > 0.45 ? 'taiga' : 'neve';                        // faixa fria
+            if (t > 0.72 && m < 0.35) return 'areia';                                // deserto quente
+            if (m > 0.80 && t >= 0.4 && t <= 0.72) return 'lama';                    // pântano
+            if (m > 0.38) return 'grama';                                           // floresta/planície (árvores vêm na dispersão)
+            return 'terra';                                                         // seco/baixa umidade
+        }
+
+        // Decide se um objeto de decoração nasce naquela célula (floresta precisa de
+        // árvores de verdade pra parecer floresta, não só grama verde).
+        function decorationForCell(terrainType, m, roll) {
+            if (terrainType === 'grama' && m > 0.62) {
+                if (roll < 0.22) return { id: 'arvore', w: 1, h: 2 };
+                if (roll < 0.26) return { id: 'savana', w: 1, h: 2 };
+            } else if (terrainType === 'grama') {
+                if (roll < 0.06) return { id: 'arbusto_grama', w: 1, h: 1 };
+                if (roll < 0.09) return { id: 'savana', w: 1, h: 2 };
+            } else if (terrainType === 'taiga') {
+                if (roll < 0.20) return { id: 'pinheiro', w: 1, h: 2 };
+            } else if (terrainType === 'areia') {
+                if (roll < 0.08) return { id: 'cacto', w: 1, h: 2 };
+            } else if (terrainType === 'neve') {
+                if (roll < 0.06) return { id: 'arbusto_neve', w: 1, h: 1 };
+            } else if (terrainType === 'areia_praia') {
+                if (roll < 0.05) return { id: 'arbusto_praia', w: 1, h: 1 };
+                else if (roll < 0.06) return { id: 'coqueiro', w: 1, h: 2 };
+            } else if (terrainType === 'manguezal') {
+                if (roll < 0.12) return { id: 'arbusto_mangue', w: 1, h: 1 };
+            }
+            return null;
+        }
+
+        // Gera terreno + decoração de bioma para UM setor, de forma 100% determinística
+        // a partir de (seedInt, sx, sy). Substitui o terreno e os objetos DESSE setor
+        // apenas — nenhum outro setor do mundo é tocado.
+        function generateSectorContent(sector, seedInt, sx, sy) {
+            const localSeed = combineSeed(seedInt, sx, sy);
+            const elevRng = mulberry32(localSeed ^ 0x1111);
+            const moistRng = mulberry32(localSeed ^ 0x2222);
+            const tempRng = mulberry32(localSeed ^ 0x3333);
+            const objRng = mulberry32(localSeed ^ 0x4444);
+
+            const LATTICE_SIZE = 4; // pontos de controle do ruído (blocos de bioma maiores/menores)
+            const elevLattice = buildLattice(elevRng, LATTICE_SIZE);
+            const moistLattice = buildLattice(moistRng, LATTICE_SIZE);
+            const tempLattice = buildLattice(tempRng, LATTICE_SIZE);
+
+            const cellInfo = [];
+            for (let r = 0; r < GRID_SIZE; r++) {
+                const row = [];
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const u = c / GRID_SIZE, v = r / GRID_SIZE;
+                    const e = sampleLattice(elevLattice, LATTICE_SIZE, u, v);
+                    const m = sampleLattice(moistLattice, LATTICE_SIZE, u, v);
+                    const t = sampleLattice(tempLattice, LATTICE_SIZE, u, v);
+                    const terrainType = pickBiomeTerrain(e, m, t);
+                    sector.terrain[r][c] = terrainType;
+                    row.push({ m, terrainType });
+                }
+                cellInfo.push(row);
+            }
+
+            // "Gerar" repovoa este setor do zero: limpa objetos antigos dele antes de espalhar a nova decoração
+            sector.objects = [];
+
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const info = cellInfo[r][c];
+                    const roll = objRng();
+                    const deco = decorationForCell(info.terrainType, info.m, roll);
+                    if (!deco) continue;
+                    if (!isAreaFree(sector, c, r, deco.w, deco.h)) continue; // não sobrepõe outro objeto já colocado
+                    sector.objects.push({
+                        uid: generateUid(),
+                        id: deco.id,
+                        type: 'object',
+                        x: c, y: r, w: deco.w, h: deco.h,
+                        layer: defaultLayerFor(deco.id, 'object'),
+                        rotation: 0,
+                        collisionType: defaultCollisionFor(deco.id, 'object'),
+                        customImg: null
+                    });
+                }
+            }
+        }
+
+        document.getElementById('btnRandomSeed').onclick = () => {
+            const randomSeed = Math.random().toString(36).slice(2, 10);
+            document.getElementById('inputSeed').value = randomSeed;
+        };
+
+        document.getElementById('btnGenerateWorld').onclick = () => {
+            if (isMapReadOnly()) { playBeep(120); return; } // Modo de Teste ou Modo de Visualização: mapa é somente-leitura
+
+            const seedText = document.getElementById('inputSeed').value.trim() || 'seed-padrao';
+            const seedInt = hashStringToInt(seedText);
+
+            beginHistoryAction(); // a geração vira UMA entrada no histórico — Ctrl+Z desfaz tudo de uma vez
+            const sector = getOrCreateSector(currentSectorX, currentSectorY);
+            generateSectorContent(sector, seedInt, currentSectorX, currentSectorY);
+            commitHistoryAction(); // também atualiza estatísticas e agenda o autosave automaticamente
+
+            selectedObjectRef = null; // qualquer seleção antiga não faz mais sentido depois de regerar
+            playBeep(850);
+        };
+
+        // Restaurar Autosave (botão manual no cabeçalho)
+        document.getElementById('btnRestoreAutosave').onclick = () => {
+            const payload = loadAutosavePayload();
+            if (!payload || !payload.sectors) { alert('Nenhum autosave encontrado.'); return; }
+            const when = payload.savedAt ? new Date(payload.savedAt).toLocaleString('pt-BR') : 'data desconhecida';
+            if (confirm(`Restaurar o autosave de ${when}? Isso substitui o que está na tela agora (mas não apaga o que está salvo em arquivo).`)) {
+                restoreFromAutosave();
+            }
+        };
+
+        // Inicialização e Loop Principal
+        getOrCreateSector(0, 0);
+
+        // Retorno do editor de dungeons: restaura silenciosamente o mundo, abre o setor
+        // de origem e tenta selecionar a estrutura pelo ID persistente (com fallback x/y).
+        // A URL é limpa no fim para que F5 não repita o fluxo de retorno.
+        (function initializeFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            const isReturn = params.get('return') === '1';
+
+            if (isReturn) {
+                const payload = loadAutosavePayload();
+                if (payload && payload.sectors) {
+                    restoreFromAutosave(true);
+                } else {
+                    console.warn('[retorno] Nenhum autosave encontrado para restaurar.');
+                }
+
+                const sx = parseInt(params.get('sx'), 10);
+                const sy = parseInt(params.get('sy'), 10);
+                if (Number.isFinite(sx) && Number.isFinite(sy)) {
+                    currentSectorX = sx;
+                    currentSectorY = sy;
+                    updateSectorUI();
+                }
+
+                const targetDungeonId = params.get('id');
+                const targetPx = parseInt(params.get('px'), 10);
+                const targetPy = parseInt(params.get('py'), 10);
+                const sector = peekSector(currentSectorX, currentSectorY);
+                let target = null;
+
+                if (targetDungeonId) {
+                    target = sector.objects.find(o =>
+                        (o.type === 'dungeon' || o.id === 'dungeon') && o.dungeonId === targetDungeonId
+                    ) || null;
+                }
+                if (!target && Number.isFinite(targetPx) && Number.isFinite(targetPy)) {
+                    target = sector.objects.find(o =>
+                        (o.type === 'dungeon' || o.id === 'dungeon') &&
+                        o.x === targetPx && o.y === targetPy
+                    ) || null;
+                }
+
+                if (target) {
+                    setTool('select');
+                    selectedObjectRef = { uid: target.uid };
+                    updateSelectionUI();
+                    playBeep(700);
+                } else {
+                    selectedObjectRef = null;
+                    updateSelectionUI();
+                    console.warn('[retorno] A estrutura Dungeon não foi encontrada no setor de origem.');
+                }
+
+                try {
+                    window.history.replaceState(null, '', window.location.pathname);
+                } catch (err) {
+                    // Não é crítico se o contexto não permitir limpar a URL.
+                }
+                return; // Não exibe o prompt normal ao retornar do interior.
+            }
+
+            // Fluxo normal: preserva o comportamento existente de perguntar sobre autosave.
+            const payload = loadAutosavePayload();
+            if (payload && payload.sectors && Object.keys(payload.sectors).length > 0) {
+                const when = payload.savedAt ? new Date(payload.savedAt).toLocaleString('pt-BR') : 'data desconhecida';
+                if (confirm(`Encontramos um autosave salvo em ${when}. Deseja restaurar esse mundo?`)) {
+                    restoreFromAutosave(true);
+                } else {
+                    updateAutosaveLabel(payload.savedAt);
+                }
+            }
+        })();
+
+        updateWorldStats();
+        gameLoop();
+    </script>
+</body>
+</html>
