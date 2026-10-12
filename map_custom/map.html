@@ -1,181 +1,1187 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Criador de Mapas RPG 2D - 16-Bit Retro</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="map.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sarah RPG — Mundo Externo</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: #020617;
+  color: #e2e8f0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+canvas {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  display: block;
+}
+
+.app-header {
+  background: #0f172a;
+  border-bottom: 1px solid #1e293b;
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.brand-icon { font-size: 28px; }
+.brand h1 { font-size: 18px; font-weight: 800; letter-spacing: 0.3px; }
+.subtitle { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+
+.header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.15s, border-color 0.15s;
+  user-select: none;
+}
+.btn-primary { background: #2563eb; color: white; }
+.btn-primary:hover { background: #1d4ed8; }
+.btn-secondary { background: #1e293b; color: #cbd5e1; border-color: #334155; }
+.btn-secondary:hover { background: #334155; }
+
+.app-main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 16px;
+  padding: 16px;
+  align-items: start;
+}
+
+.info-panel {
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+.info-value {
+  color: #38bdf8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 600;
+  text-align: right;
+}
+
+.error-box {
+  background: #7f1d1d;
+  border: 1px solid #b91c1c;
+  color: #fecaca;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.controls-hint {
+  border-top: 1px solid #1e293b;
+  padding-top: 12px;
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.7;
+}
+.controls-hint:first-of-type { border-top: 0; padding-top: 0; }
+.controls-hint strong { color: #e2e8f0; display: block; margin-bottom: 6px; font-size: 11px; }
+.controls-hint ul { list-style: none; }
+.controls-hint li::before { content: '•'; color: #475569; margin-right: 6px; }
+.controls-hint em { color: #cbd5e1; font-style: normal; font-weight: 600; }
+
+kbd {
+  display: inline-block;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  color: #e2e8f0;
+  margin-right: 2px;
+}
+
+.canvas-wrap {
+  background: #020617;
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 500px;
+}
+
+canvas#gameCanvas {
+  background: #050a14;
+  border-radius: 6px;
+  max-width: 100%;
+  height: auto;
+  box-shadow: 0 0 40px rgba(56, 189, 248, 0.06) inset;
+}
+
+@media (max-width: 800px) {
+  .app-main { grid-template-columns: 1fr; }
+  .info-panel { order: 2; }
+  .canvas-wrap { order: 1; }
+}
+
+</style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans select-none p-4">
+<body>
+<header class="app-header">
+  <div class="brand">
+    <span class="brand-icon">🗺️</span>
+    <div>
+      <h1>Sarah RPG — Mundo Externo</h1>
+      <p class="subtitle">Explore o mapa criado no editor</p>
+    </div>
+  </div>
+  <div class="header-actions">
+    <label class="btn btn-primary" for="fileInput">📂 Carregar mundo (.json)</label>
+    <input type="file" id="fileInput" accept=".json,application/json" hidden>
+    <button id="resetBtn" class="btn btn-secondary" type="button">↺ Reiniciar posição</button>
+  </div>
+</header>
 
-    <!-- Cabeçalho Principal -->
-    <header class="w-full max-w-7xl mx-auto bg-slate-900 border border-slate-800 rounded-xl p-3 mb-4 shadow-lg flex flex-wrap justify-between items-center gap-4">
-        <div class="flex items-center gap-3">
-            <a href="../index.html" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs border border-slate-700 transition" title="Voltar ao Menu">
-                <i class="fa-solid fa-map"></i>
-            </a>
-            <div>
-                <div class="flex items-center gap-2">
-                    <h1 class="text-base font-black text-slate-100 tracking-wide">Criador de Mapas RPG 2D</h1>
-                    <span class="text-[10px] bg-emerald-500/20 text-emerald-400 font-mono font-bold px-2 py-0.5 rounded border border-emerald-500/30">16-Bit Retro</span>
-                </div>
-                <p class="text-[11px] text-slate-400">Edição Ortopédica 2D - Grade 12x12 com Setores Infinitos</p>
-            </div>
-        </div>
+<main class="app-main">
+  <aside class="info-panel">
+    <div class="info-row"><span>Setor atual</span><span id="sectorLabel" class="info-value">—</span></div>
+    <div class="info-row"><span>Posição</span><span id="posLabel" class="info-value">—</span></div>
+    <div class="info-row"><span>Estado</span><span id="stateLabel" class="info-value">Aguardando mapa</span></div>
+    <div id="errorBox" class="error-box" hidden></div>
+    <div class="controls-hint">
+      <p><strong>Controles</strong></p>
+      <ul>
+        <li><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> para mover</li>
+        <li>Setas do teclado também funcionam</li>
+        <li>Cruzar a borda leva ao setor vizinho (se existir)</li>
+      </ul>
+    </div>
+    <div class="controls-hint">
+      <p><strong>Como usar</strong></p>
+      <ul>
+        <li>Clique em <em>Carregar mundo</em> e escolha o JSON exportado pelo criador</li>
+        <li>O personagem nasce na primeira célula caminhável do setor 0,0</li>
+        <li>Use <em>Reiniciar posição</em> para voltar ao nascimento (o mapa não é afetado)</li>
+      </ul>
+    </div>
+  </aside>
+  <section class="canvas-wrap">
+    <canvas id="gameCanvas" width="576" height="576"></canvas>
+  </section>
+</main>
 
-        <!-- Botões do Header -->
-        <div class="flex items-center gap-2 text-xs">
-            <button id="btnSoundToggle" class="px-3 py-1.5 bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded-lg hover:bg-amber-500/20 font-medium transition flex items-center gap-1.5">
-                <i class="fa-solid fa-volume-high"></i> Som: <span id="soundLabel">LIGADO</span>
-            </button>
-            
-            <button id="btnSaveProject" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium shadow transition flex items-center gap-1.5">
-                <i class="fa-solid fa-download"></i> Salvar Projeto
-            </button>
+<script>
+'use strict';
 
-            <button id="btnLoadProject" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium shadow transition flex items-center gap-1.5">
-                <i class="fa-solid fa-upload"></i> Carregar
-            </button>
-            <input type="file" id="fileLoadProject" accept=".json" class="hidden">
+// ============================================================
+// CONSTANTES
+// ============================================================
+const CELL_SIZE = 48;
+const GRID_SIZE = 12;
+const MOVE_INTERVAL_MS = 140;
+const SPRITE_FRAME_MS = 220;
 
-            <!-- Botão Importar JSON -->
-            <button id="btnImportJSON" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg font-medium shadow transition flex items-center gap-1.5">
-                <i class="fa-solid fa-file-import"></i> Importar JSON
-            </button>
-            <input type="file" id="jsonInput" accept=".json" class="hidden">
+// Mesma tabela do criador de mapas: colisão por terreno.
+const TERRAIN_COLLISION = {
+  grama: 'andavel', terra: 'andavel', pedra: 'andavel', taiga: 'andavel',
+  areia: 'andavel', areia_praia: 'andavel', neve: 'andavel', savana: 'andavel',
+  manguezal: 'andavel', lama: 'andavel',
+  agua: 'agua', agua_congelada: 'agua',
+  rocha: 'bloqueado',
+  lava: 'especial'
+};
 
-            <button id="btnExportPNG" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium shadow transition flex items-center gap-1.5">
-                <i class="fa-solid fa-image"></i> Exportar PNG
-            </button>
-        </div>
-    </header>
+// Colisão padrão por id de objeto (fallback se o JSON não trouxer collisionType).
+const OBJECT_COLLISION_DEFAULT = {
+  arvore: 'bloqueado', pinheiro: 'bloqueado', coqueiro: 'bloqueado', cacto: 'bloqueado',
+  savana: 'andavel',
+  arbusto_grama: 'andavel', arbusto_neve: 'andavel', arbusto_praia: 'andavel', arbusto_mangue: 'andavel',
+  casa: 'bloqueado', casa_2andares: 'bloqueado', torre: 'bloqueado',
+  portao: 'bloqueado', muralha: 'bloqueado', vulcao: 'especial',
+  castelo: 'bloqueado', dungeon: 'bloqueado',
+  barco_pequeno: 'andavel', barco_medio: 'andavel', barco_grande: 'andavel',
+  arqueiro: 'bloqueado', cavaleiro: 'bloqueado', piqueiro: 'bloqueado', besteiro: 'bloqueado',
+  npc_cidadao: 'andavel', npc_guarda: 'bloqueado', npc_comerciante: 'andavel'
+};
 
-    <!-- Área Principal -->
-    <main class="w-full max-w-7xl mx-auto flex-1 flex flex-col lg:flex-row gap-4 items-start">
-        
-        <!-- Sidebar Esquerda -->
-        <aside class="w-full lg:w-80 flex flex-col gap-4">
-            
-            <!-- Paleta de Elementos -->
-            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg flex flex-col gap-3">
-                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-                    <h2 class="text-xs font-bold text-slate-100 flex items-center gap-2">
-                        🎨 Paleta de Elementos
-                    </h2>
-                    <span id="activeElementLabel" class="text-xs font-semibold text-emerald-400">Grama</span>
-                </div>
+// ============================================================
+// ESTADO GLOBAL
+// ============================================================
+const world = { sectors: {}, loaded: false };
+const curSector = { x: 0, y: 0 };
+const player = { x: 0, y: 0, facing: 'down' };
+const imageCache = {};
+const keysDown = Object.create(null);
 
-                <div class="flex flex-col gap-3 overflow-y-auto max-h-[480px] pr-1">
-                    
-                    <!-- Terrenos Básicos (1x1) -->
-                    <div>
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">🌱 Terrenos Básicos (1x1)</span>
-                        <div class="grid grid-cols-2 gap-1.5">
-                            <button class="palette-btn active" data-id="grama" data-type="terrain">🟢 Grama</button>
-                            <button class="palette-btn" data-id="terra" data-type="terrain">🟤 Terra</button>
-                            <button class="palette-btn" data-id="agua" data-type="terrain">🔵 Água</button>
-                            <button class="palette-btn" data-id="pedra" data-type="terrain">⚪ Pedra</button>
-                            <button class="palette-btn" data-id="areia" data-type="terrain">🟡 Areia</button>
-                            <button class="palette-btn" data-id="gelo" data-type="terrain">🧊 Gelo</button>
-                            <button class="palette-btn" data-id="taiga" data-type="terrain">🌲 Taiga</button>
-                            <button class="palette-btn" data-id="rocha" data-type="terrain">⚫ Rocha</button>
-                        </div>
-                        <button class="palette-btn border-rose-500/30 text-rose-400 hover:bg-rose-500/10 mt-1.5 justify-center" data-id="clear" data-type="clear">
-                            🧹 Limpar Célula
-                        </button>
-                    </div>
+let lastMoveAt = 0;
+let hasSpawned = false;
+let lastDirKey = null;
 
-                    <!-- Vegetação & Natureza (1x2) -->
-                    <div>
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">🌲 Vegetação & Natureza (1x2)</span>
-                        <div class="grid grid-cols-2 gap-1.5">
-                            <button class="palette-btn" data-id="arvore" data-type="object" data-w="1" data-h="2">🌲 Árvore (1x2)</button>
-                            <button class="palette-btn" data-id="pinheiro" data-type="object" data-w="1" data-h="2">🌲 Pinheiro (1x2)</button>
-                            <button class="palette-btn" data-id="savana" data-type="object" data-w="1" data-h="2">🌾 Savana (1x2)</button>
-                            <button class="palette-btn" data-id="cacto" data-type="object" data-w="1" data-h="2">🌵 Cacto (1x2)</button>
-                        </div>
-                    </div>
+// ============================================================
+// DOM
+// ============================================================
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = GRID_SIZE * CELL_SIZE;
+canvas.height = GRID_SIZE * CELL_SIZE;
 
-                    <!-- Estruturas & Edifícios -->
-                    <div>
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">🏰 Estruturas & Edifícios</span>
-                        <div id="structuresContainer" class="grid grid-cols-2 gap-1.5">
-                            <button class="palette-btn" data-id="casa" data-type="object" data-w="2" data-h="2">🏠 Casa (2x2)</button>
-                            <button class="palette-btn" data-id="torre" data-type="object" data-w="2" data-h="3">🏰 Torre (2x3)</button>
-                            <button class="palette-btn" data-id="portao" data-type="object" data-w="2" data-h="2">🚪 Portão (2x2)</button>
-                            <button class="palette-btn" data-id="muralha" data-type="object" data-w="1" data-h="1">🧱 Muralha (1x1)</button>
-                            <button class="palette-btn col-span-2 border-amber-500/40 text-amber-300" data-id="castelo" data-type="object" data-w="4" data-h="4">
-                                🏰 Castelo Imponente (4x4)
-                            </button>
-                        </div>
-                    </div>
+const sectorLabel = document.getElementById('sectorLabel');
+const posLabel = document.getElementById('posLabel');
+const stateLabel = document.getElementById('stateLabel');
+const errorBox = document.getElementById('errorBox');
 
-                    <!-- Unidades Militares (1x1) -->
-                    <div>
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">⚔️ Unidades Militares (1x1)</span>
-                        <div class="grid grid-cols-2 gap-1.5">
-                            <button class="palette-btn" data-id="arqueiro" data-type="unit">🏹 Arqueiro</button>
-                            <button class="palette-btn" data-id="cavaleiro" data-type="unit">🛡️ Cavaleiro</button>
-                            <button class="palette-btn" data-id="piqueiro" data-type="unit">🗡️ Piqueiro</button>
-                            <button class="palette-btn" data-id="besteiro" data-type="unit">🎯 Besteiro</button>
-                        </div>
-                    </div>
+// ============================================================
+// UTILITÁRIOS
+// ============================================================
+function setError(msg) {
+  if (!msg) {
+    errorBox.hidden = true;
+    errorBox.textContent = '';
+    return;
+  }
+  errorBox.hidden = false;
+  errorBox.textContent = msg;
+}
 
-                </div>
-            </div>
+function updateHUD() {
+  sectorLabel.textContent = curSector.x + ',' + curSector.y;
+  posLabel.textContent = player.x + ',' + player.y;
+}
 
-            <!-- Navegação do Mundo -->
-            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg flex flex-col gap-3">
-                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-                    <h2 class="text-xs font-bold text-slate-100 flex items-center gap-1.5">🧭 Navegação do Mundo</h2>
-                    <span class="text-xs font-mono text-sky-400 font-bold">Setor (<span id="sectorX">0</span>, <span id="sectorY">0</span>)</span>
-                </div>
+function setState(msg) {
+  stateLabel.textContent = msg;
+}
 
-                <div class="flex items-center justify-between gap-2">
-                    <div class="grid grid-cols-3 gap-1 w-24 h-24">
-                        <div></div>
-                        <button class="nav-btn" id="btnNavUp">↑</button>
-                        <div></div>
-                        <button class="nav-btn" id="btnNavLeft">←</button>
-                        <button class="nav-btn bg-slate-800 text-slate-300 text-[10px]" id="btnNavCenter">0,0</button>
-                        <button class="nav-btn" id="btnNavRight">→</button>
-                        <div></div>
-                        <button class="nav-btn" id="btnNavDown">↓</button>
-                        <div></div>
-                    </div>
+function hashXY(x, y) {
+  const s = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+  return s - Math.floor(s);
+}
 
-                    <div class="flex flex-col items-center">
-                        <span class="text-[10px] text-slate-400 mb-1">Minimapa 5x5</span>
-                        <div id="minimap" class="w-20 h-20 bg-slate-950 border border-slate-800 rounded grid grid-cols-5 gap-0.5 p-1"></div>
-                    </div>
-                </div>
-            </div>
+// ============================================================
+// NORMALIZAÇÃO DO JSON
+// ============================================================
+// Aceita:
+//   - formato v2: { formatVersion: 2, sectors: { "x,y": { terrain, objects } } }
+//   - formato genérico: { sectors: {...} }
+//   - formato legado: matriz direta de células {terrain,item}
+// Retorna { "x,y": { terrain: [12][12], objects: [...] } } ou null.
+function normalizeWorld(raw) {
+  if (!raw || typeof raw !== 'object') return null;
 
-        </aside>
+  let rawSectors = null;
+  if (raw.formatVersion === 2 && raw.sectors && typeof raw.sectors === 'object') {
+    rawSectors = raw.sectors;
+  } else if (raw.sectors && typeof raw.sectors === 'object') {
+    rawSectors = raw.sectors;
+  } else if (!Array.isArray(raw) && !raw.terrain) {
+    // Pode ser o próprio dicionário de setores
+    rawSectors = raw;
+  }
 
-        <!-- Canvas Central -->
-        <section class="flex-1 flex flex-col items-center justify-start gap-4 w-full">
-            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-2xl flex flex-col items-center gap-4 w-full">
-                <div class="relative bg-slate-950 p-2 rounded-xl border border-slate-800 shadow-inner">
-                    <canvas id="mapCanvas" width="576" height="576" class="cursor-crosshair rounded bg-slate-950"></canvas>
-                </div>
+  if (!rawSectors || typeof rawSectors !== 'object') return null;
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 w-full">
-                    <button id="btnClearSector" class="w-full py-2 bg-rose-900/40 hover:bg-rose-800/60 text-rose-300 border border-rose-700/50 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-trash-can"></i> Limpar Setor Atual
-                    </button>
-                    <button id="btnResetWorld" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-rotate-left"></i> Resetar Todo o Mundo
-                    </button>
-                </div>
-            </div>
-        </section>
+  const out = {};
+  for (const key of Object.keys(rawSectors)) {
+    const normalized = normalizeSector(rawSectors[key]);
+    if (normalized) out[key] = normalized;
+  }
 
-    </main>
+  return Object.keys(out).length > 0 ? out : null;
+}
 
-    <script src="map.js"></script>
+function normalizeSector(raw) {
+  if (!raw) return null;
+
+  const sector = { terrain: [], objects: [] };
+
+  // Formato legado: array de linhas com {terrain, item}
+  if (Array.isArray(raw)) {
+    for (let r = 0; r < GRID_SIZE; r++) {
+      const row = [];
+      for (let c = 0; c < GRID_SIZE; c++) {
+        const cell = (raw[r] && raw[r][c]) || {};
+        row.push(typeof cell.terrain === 'string' ? cell.terrain : 'grama');
+        if (cell.item && cell.item.id) {
+          sector.objects.push({
+            id: cell.item.id,
+            type: 'object',
+            x: c, y: r,
+            w: cell.item.w || 1,
+            h: cell.item.h || 1,
+            layer: 'decoration',
+            collisionType: OBJECT_COLLISION_DEFAULT[cell.item.id] || 'bloqueado',
+            customImg: cell.item.customImg || null,
+            dungeonId: cell.item.dungeonId || null
+          });
+        }
+      }
+      sector.terrain.push(row);
+    }
+    return sector;
+  }
+
+  // Formato v2 ou compatível
+  if (Array.isArray(raw.terrain)) {
+    for (let r = 0; r < GRID_SIZE; r++) {
+      const row = [];
+      for (let c = 0; c < GRID_SIZE; c++) {
+        const v = (raw.terrain[r] && raw.terrain[r][c]);
+        row.push(typeof v === 'string' ? v : 'grama');
+      }
+      sector.terrain.push(row);
+    }
+  } else {
+    for (let r = 0; r < GRID_SIZE; r++) {
+      const row = [];
+      for (let c = 0; c < GRID_SIZE; c++) row.push('grama');
+      sector.terrain.push(row);
+    }
+  }
+
+  if (Array.isArray(raw.objects)) {
+    for (const o of raw.objects) {
+      if (!o || typeof o !== 'object' || !o.id) continue;
+      const id = String(o.id);
+      const x = Number.isFinite(o.x) ? o.x : 0;
+      const y = Number.isFinite(o.y) ? o.y : 0;
+      const w = Math.max(1, Number.isFinite(o.w) ? o.w : 1);
+      const h = Math.max(1, Number.isFinite(o.h) ? o.h : 1);
+      const collisionType = (typeof o.collisionType === 'string' && o.collisionType)
+        ? o.collisionType
+        : (OBJECT_COLLISION_DEFAULT[id] || 'bloqueado');
+
+      sector.objects.push({
+        id,
+        type: typeof o.type === 'string' ? o.type : 'object',
+        x, y, w, h,
+        layer: typeof o.layer === 'string' ? o.layer : 'decoration',
+        collisionType,
+        customImg: typeof o.customImg === 'string' ? o.customImg : null,
+        dungeonId: typeof o.dungeonId === 'string' ? o.dungeonId : null
+      });
+    }
+  }
+
+  return sector;
+}
+
+// ============================================================
+// COLISÃO
+// ============================================================
+function getObjectAt(sector, col, row) {
+  if (!sector) return null;
+  for (let i = sector.objects.length - 1; i >= 0; i--) {
+    const o = sector.objects[i];
+    if (col >= o.x && col < o.x + o.w && row >= o.y && row < o.y + o.h) return o;
+  }
+  return null;
+}
+
+function cellCollision(sector, col, row) {
+  if (!sector) return 'bloqueado';
+  if (col < 0 || row < 0 || col >= GRID_SIZE || row >= GRID_SIZE) return 'bloqueado';
+  const obj = getObjectAt(sector, col, row);
+  if (obj) return obj.collisionType;
+  return TERRAIN_COLLISION[sector.terrain[row][col]] || 'andavel';
+}
+
+function isWalkable(sx, sy, col, row) {
+  const sector = world.sectors[sx + ',' + sy];
+  if (!sector) return false;
+  return cellCollision(sector, col, row) === 'andavel';
+}
+
+// ============================================================
+// MOVIMENTO
+// ============================================================
+function tryMove(dx, dy) {
+  if (!world.loaded) return false;
+
+  let nsx = curSector.x, nsy = curSector.y;
+  let nx = player.x + dx;
+  let ny = player.y + dy;
+
+  // Atravessa bordas — só efetiva se o vizinho existir e a célula destino for andável.
+  if (nx < 0) { nsx--; nx = GRID_SIZE - 1; }
+  else if (nx >= GRID_SIZE) { nsx++; nx = 0; }
+  if (ny < 0) { nsy--; ny = GRID_SIZE - 1; }
+  else if (ny >= GRID_SIZE) { nsy++; ny = 0; }
+
+  if (!isWalkable(nsx, nsy, nx, ny)) return false;
+
+  curSector.x = nsx;
+  curSector.y = nsy;
+  player.x = nx;
+  player.y = ny;
+  updateHUD();
+  return true;
+}
+
+// ============================================================
+// SPAWN DO JOGADOR
+// ============================================================
+function respawnPlayer() {
+  const sectorKeys = Object.keys(world.sectors);
+  if (sectorKeys.length === 0) {
+    setError('Nenhum setor carregado.');
+    return false;
+  }
+
+  // Prioridade: setor "0,0", depois os demais em ordem alfabética estável.
+  const ordered = [];
+  if (world.sectors['0,0']) ordered.push('0,0');
+  for (const key of sectorKeys) {
+    if (key !== '0,0') ordered.push(key);
+  }
+
+  for (const key of ordered) {
+    const sector = world.sectors[key];
+    for (let r = 0; r < GRID_SIZE; r++) {
+      for (let c = 0; c < GRID_SIZE; c++) {
+        if (cellCollision(sector, c, r) === 'andavel') {
+          const parts = key.split(',');
+          curSector.x = parseInt(parts[0], 10) || 0;
+          curSector.y = parseInt(parts[1], 10) || 0;
+          player.x = c;
+          player.y = r;
+          player.facing = 'down';
+          hasSpawned = true;
+          updateHUD();
+          setError(null);
+          return true;
+        }
+      }
+    }
+  }
+
+  setError('Nenhuma célula caminhável encontrada no mundo carregado.');
+  return false;
+}
+
+// ============================================================
+// RENDERIZAÇÃO — TERRENOS
+// ============================================================
+function drawTerrain(type, x, y) {
+  const s = CELL_SIZE;
+  const v = hashXY(x * 0.05, y * 0.05);
+
+  switch (type) {
+    case 'grama':
+      ctx.fillStyle = v < 0.55 ? '#22c55e' : (v < 0.82 ? '#16a34a' : '#4ade80');
+      ctx.fillRect(x, y, s, s);
+      ctx.fillStyle = '#15803d';
+      ctx.fillRect(x + 10, y + 12, 3, 6);
+      ctx.fillRect(x + 13, y + 10, 3, 8);
+      ctx.fillRect(x + 30, y + 26, 3, 8);
+      ctx.fillRect(x + 33, y + 28, 3, 6);
+      break;
+    case 'terra':
+      ctx.fillStyle = v < 0.6 ? '#78350f' : '#8a4212';
+      ctx.fillRect(x, y, s, s);
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(x + 8, y + 8, 10, 10);
+      ctx.fillRect(x + 26, y + 26, 12, 12);
+      break;
+    case 'agua': {
+      ctx.fillStyle = '#075985';
+      ctx.fillRect(x, y, s, s);
+      ctx.fillStyle = '#0369a1';
+      ctx.fillRect(x + 2, y + 2, s - 4, s - 4);
+      const frame = Math.floor(Date.now() / 250) % 3;
+      const off = frame * 6;
+      ctx.fillStyle = '#0ea5e9';
+      ctx.fillRect(x + ((4 + off) % 28), y + 12, 18, 4);
+      ctx.fillRect(x + ((22 + off) % 28), y + 30, 20, 4);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(x + ((14 + off) % 30), y + 22, 14, 3);
+      break;
+    }
+    case 'agua_congelada':
+      ctx.fillStyle = '#0369a1';
+      ctx.fillRect(x, y, s, s);
+      ctx.fillStyle = 'rgba(224, 242, 254, 0.8)';
+      ctx.fillRect(x, y, s, s);
+      ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(x + 4, y + 10);
+      ctx.lineTo(x + 22, y + 16);
+      ctx.lineTo(x + 16, y + 30);
+      ctx.moveTo(x + 22, y + 16);
+      ctx.lineTo(x + 36, y + 12);
+      ctx.stroke();
+      break;
+    case 'neve':
+      ctx.fillStyle = '#f0f9ff';
+      ctx.fillRect(x, y, s, s);
+      ctx.fillStyle = '#dbeafe';
+      ctx.fillRect(x + 6, y + 10, 10, 4);
+      ctx.fillRect(x + 28, y + 28, 12, 4);
+      ctx.fillStyle = '#bae6fd';
+      ctx.fillRect(x + 16, y + 34, 14, 3);
+      break;
+    case 'areia_praia':
+      ctx.fillStyle = '#fef9c3';
+      ctx.fillRect(x, y, s, s);
+      ctx.strokeStyle = '#fde68a';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x + 2, y + 16);
+      ctx.quadraticCurveTo(x + 24, y + 10, x + 46, y + 18);
+      ctx.stroke();
+      break;
+    case 'areia':
+      ctx.fillStyle = v < 0.6 ? '#eab308' : '#d4a017';
+      ctx.fillRect(x, y, s, s);
+      ctx.strokeStyle = '#ca8a04';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x, y + 14);
+      ctx.quadraticCurveTo(x + 24, y + 6, x + 48, y + 14);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x, y + 34);
+      ctx.quadraticCurveTo(x + 24, y + 26, x + 48, y + 34);
+      ctx.stroke();
+      break;
+    case 'pedra':
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(x, y, s, s);
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x + 2, y + 2, 20, 20);
+      ctx.strokeRect(x + 26, y + 2, 20, 20);
+      ctx.strokeRect(x + 2, y + 26, 20, 20);
+      ctx.strokeRect(x + 26, y + 26, 20, 20);
+      break;
+    case 'taiga':
+      ctx.fillStyle = v < 0.65 ? '#14532d' : '#166534';
+      ctx.fillRect(x, y, s, s);
+      ctx.fillStyle = '#052e16';
+      ctx.fillRect(x + 10, y + 10, 6, 6);
+      ctx.fillRect(x + 30, y + 30, 5, 5);
+      ctx.fillStyle = '#065f46';
+      ctx.fillRect(x + 4, y + 30, 3, 8);
+      ctx.fillRect(x + 36, y + 8, 3, 8);
+      break;
+    case 'rocha':
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(x, y, s, s);
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(x + 6, y + 6, 36, 36);
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(x + 8, y + 8, 14, 12);
+      break;
+    case 'manguezal':
+      ctx.fillStyle = '#3f4f24';
+      ctx.fillRect(x, y, s, s);
+      ctx.fillStyle = '#1c260d';
+      ctx.fillRect(x + 4, y + 16, 14, 6);
+      ctx.fillRect(x + 24, y + 28, 16, 6);
+      ctx.fillStyle = '#65a30d';
+      ctx.fillRect(x + 12, y + 8, 4, 4);
+      ctx.fillRect(x + 30, y + 20, 4, 4);
+      break;
+    case 'lama':
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(x, y, s, s);
+      ctx.fillStyle = '#270e02';
+      ctx.fillRect(x + 6, y + 12, 18, 10);
+      ctx.fillRect(x + 22, y + 28, 16, 12);
+      break;
+    case 'lava': {
+      ctx.fillStyle = '#7c2d12';
+      ctx.fillRect(x, y, s, s);
+      const lFrame = Math.floor(Date.now() / 200) % 4;
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(x + 2, y + 2, s - 4, s - 4);
+      ctx.fillStyle = '#f97316';
+      ctx.fillRect(x + ((lFrame * 8) % 32), y + 8, 16, 8);
+      ctx.fillRect(x + ((32 - lFrame * 8) % 32), y + 28, 16, 8);
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(x + ((lFrame * 8 + 4) % 32), y + 10, 6, 4);
+      break;
+    }
+    case 'savana':
+      ctx.fillStyle = '#ca8a04';
+      ctx.fillRect(x, y, s, s);
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(x + 20, y + 18, 4, 14);
+      ctx.fillRect(x + 28, y + 22, 4, 10);
+      break;
+    default:
+      // Terreno desconhecido: cinza neutro. Não trava.
+      ctx.fillStyle = '#1f2937';
+      ctx.fillRect(x, y, s, s);
+  }
+
+  // Grade sutil
+  ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x + 0.5, y + 0.5, s - 1, s - 1);
+}
+
+// ============================================================
+// RENDERIZAÇÃO — OBJETOS
+// ============================================================
+function ensureImage(url) {
+  if (imageCache[url]) return imageCache[url];
+  const img = new Image();
+  img.onload = () => render();
+  img.onerror = () => { imageCache[url] = null; };
+  img.src = url;
+  imageCache[url] = img;
+  return img;
+}
+
+function drawObject(obj, px, py, pw, ph) {
+  if (obj.customImg) {
+    const img = ensureImage(obj.customImg);
+    if (img && img.complete && img.naturalWidth > 0) {
+      ctx.drawImage(img, px, py, pw, ph);
+      return;
+    }
+    // Enquanto a imagem não carrega (ou falha), cai para o desenho procedural.
+  }
+
+  switch (obj.id) {
+    case 'arvore':
+      ctx.fillStyle = 'rgba(0,0,0,0.22)';
+      ctx.beginPath();
+      ctx.ellipse(px + pw / 2, py + ph - 4, pw * 0.32, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#5c3010';
+      ctx.fillRect(px + pw * 0.4, py + ph * 0.5, pw * 0.2, ph * 0.5);
+      ctx.fillStyle = '#14532d';
+      ctx.beginPath();
+      ctx.arc(px + pw / 2, py + ph * 0.3, pw * 0.45, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#22c55e';
+      ctx.beginPath();
+      ctx.arc(px + pw / 2 - pw * 0.15, py + ph * 0.2, pw * 0.22, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+    case 'pinheiro':
+      ctx.fillStyle = 'rgba(0,0,0,0.22)';
+      ctx.beginPath();
+      ctx.ellipse(px + pw / 2, py + ph - 3, pw * 0.28, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#5c3010';
+      ctx.fillRect(px + pw * 0.4, py + ph * 0.75, pw * 0.2, ph * 0.25);
+      ctx.fillStyle = '#0f3d20';
+      ctx.beginPath();
+      ctx.moveTo(px, py + ph * 0.75);
+      ctx.lineTo(px + pw / 2, py + ph * 0.05);
+      ctx.lineTo(px + pw, py + ph * 0.75);
+      ctx.fill();
+      ctx.fillStyle = '#166534';
+      ctx.beginPath();
+      ctx.moveTo(px + pw * 0.15, py + ph * 0.5);
+      ctx.lineTo(px + pw / 2, py + ph * 0.15);
+      ctx.lineTo(px + pw * 0.85, py + ph * 0.5);
+      ctx.fill();
+      break;
+    case 'coqueiro':
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(px + pw * 0.45, py + ph * 0.3, pw * 0.1, ph * 0.7);
+      ctx.fillStyle = '#166534';
+      ctx.fillRect(px, py + ph * 0.15, pw * 0.5, ph * 0.15);
+      ctx.fillRect(px + pw * 0.5, py + ph * 0.15, pw * 0.5, ph * 0.15);
+      ctx.fillRect(px + pw * 0.15, py + ph * 0.05, pw * 0.7, ph * 0.1);
+      break;
+    case 'savana':
+      ctx.fillStyle = '#ca8a04';
+      for (let i = 0; i < 5; i++) {
+        const bx = px + pw * (0.15 + i * 0.18);
+        ctx.beginPath();
+        ctx.moveTo(bx - 3, py + ph);
+        ctx.lineTo(bx, py + ph * 0.3);
+        ctx.lineTo(bx + 3, py + ph);
+        ctx.fill();
+      }
+      break;
+    case 'cacto':
+      ctx.fillStyle = '#15803d';
+      ctx.fillRect(px + pw * 0.4, py + ph * 0.1, pw * 0.2, ph * 0.85);
+      ctx.fillRect(px + pw * 0.15, py + ph * 0.35, pw * 0.3, ph * 0.12);
+      ctx.fillRect(px + pw * 0.55, py + ph * 0.55, pw * 0.3, ph * 0.12);
+      ctx.fillStyle = '#052e16';
+      ctx.fillRect(px + pw * 0.42, py + ph * 0.2, 2, 4);
+      ctx.fillRect(px + pw * 0.56, py + ph * 0.4, 2, 4);
+      break;
+    case 'arbusto_grama':
+      ctx.fillStyle = '#15803d';
+      ctx.beginPath();
+      ctx.arc(px + pw / 2, py + ph * 0.55, pw * 0.35, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#22c55e';
+      ctx.beginPath();
+      ctx.arc(px + pw * 0.4, py + ph * 0.45, pw * 0.2, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+    case 'arbusto_neve':
+      ctx.fillStyle = '#075985';
+      ctx.beginPath();
+      ctx.arc(px + pw / 2, py + ph * 0.6, pw * 0.35, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#f0f9ff';
+      ctx.beginPath();
+      ctx.arc(px + pw / 2, py + ph * 0.45, pw * 0.25, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+    case 'arbusto_praia':
+      ctx.fillStyle = '#ca8a04';
+      ctx.fillRect(px + pw * 0.25, py + ph * 0.4, pw * 0.5, ph * 0.45);
+      ctx.fillStyle = '#fde047';
+      ctx.fillRect(px + pw * 0.3, py + ph * 0.25, pw * 0.4, ph * 0.18);
+      break;
+    case 'arbusto_mangue':
+      ctx.fillStyle = '#1a2e05';
+      ctx.fillRect(px + pw * 0.2, py + ph * 0.35, pw * 0.6, ph * 0.5);
+      ctx.fillStyle = '#4d7c0f';
+      ctx.fillRect(px + pw * 0.25, py + ph * 0.2, pw * 0.5, ph * 0.2);
+      break;
+    case 'casa':
+      ctx.fillStyle = '#fde047';
+      ctx.fillRect(px + pw * 0.1, py + ph * 0.42, pw * 0.8, ph * 0.55);
+      ctx.fillStyle = '#dc2626';
+      ctx.beginPath();
+      ctx.moveTo(px, py + ph * 0.42);
+      ctx.lineTo(px + pw / 2, py + ph * 0.05);
+      ctx.lineTo(px + pw, py + ph * 0.42);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#5c3010';
+      ctx.fillRect(px + pw * 0.6, py + ph * 0.6, pw * 0.2, ph * 0.37);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(px + pw * 0.18, py + ph * 0.55, pw * 0.16, ph * 0.16);
+      break;
+    case 'casa_2andares':
+      ctx.fillStyle = '#f5e8c8';
+      ctx.fillRect(px + pw * 0.1, py + ph * 0.35, pw * 0.8, ph * 0.62);
+      ctx.fillStyle = '#fde047';
+      ctx.fillRect(px + pw * 0.1, py + ph * 0.35, pw * 0.8, ph * 0.28);
+      ctx.fillStyle = '#b91c1c';
+      ctx.beginPath();
+      ctx.moveTo(px, py + ph * 0.35);
+      ctx.lineTo(px + pw / 2, py + ph * 0.02);
+      ctx.lineTo(px + pw, py + ph * 0.35);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(px + pw * 0.18, py + ph * 0.42, pw * 0.16, ph * 0.14);
+      ctx.fillRect(px + pw * 0.66, py + ph * 0.42, pw * 0.16, ph * 0.14);
+      break;
+    case 'torre':
+      ctx.fillStyle = '#64748b';
+      ctx.beginPath();
+      ctx.moveTo(px + pw * 0.15, py + ph);
+      ctx.lineTo(px + pw * 0.25, py + ph * 0.22);
+      ctx.lineTo(px + pw * 0.75, py + ph * 0.22);
+      ctx.lineTo(px + pw * 0.85, py + ph);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(px + pw * 0.2, py + ph * 0.18, pw * 0.6, ph * 0.06);
+      ctx.fillStyle = '#7f1d1d';
+      ctx.beginPath();
+      ctx.moveTo(px + pw * 0.1, py + ph * 0.18);
+      ctx.lineTo(px + pw / 2, py - ph * 0.15);
+      ctx.lineTo(px + pw * 0.9, py + ph * 0.18);
+      ctx.closePath();
+      ctx.fill();
+      break;
+    case 'portao':
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(px, py, pw, ph);
+      ctx.fillStyle = '#5c3010';
+      ctx.fillRect(px + pw * 0.2, py + ph * 0.3, pw * 0.6, ph * 0.7);
+      ctx.strokeStyle = '#2a1404';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(px + pw / 2, py + ph * 0.3);
+      ctx.lineTo(px + pw / 2, py + ph);
+      ctx.stroke();
+      break;
+    case 'muralha':
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(px, py, pw, ph);
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(px, py, pw, 3);
+      ctx.strokeStyle = 'rgba(30,41,59,0.6)';
+      ctx.lineWidth = 1;
+      const rows = 4, off = ph / rows;
+      for (let i = 0; i <= rows; i++) {
+        ctx.beginPath();
+        ctx.moveTo(px, py + i * off);
+        ctx.lineTo(px + pw, py + i * off);
+        ctx.stroke();
+      }
+      break;
+    case 'vulcao':
+      ctx.fillStyle = '#44403c';
+      ctx.beginPath();
+      ctx.moveTo(px + pw * 0.05, py + ph);
+      ctx.lineTo(px + pw * 0.35, py + ph * 0.25);
+      ctx.lineTo(px + pw * 0.65, py + ph * 0.25);
+      ctx.lineTo(px + pw * 0.95, py + ph);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#292524';
+      ctx.beginPath();
+      ctx.moveTo(px + pw * 0.2, py + ph);
+      ctx.lineTo(px + pw * 0.42, py + ph * 0.3);
+      ctx.lineTo(px + pw * 0.58, py + ph * 0.3);
+      ctx.lineTo(px + pw * 0.8, py + ph);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(px + pw * 0.4, py + ph * 0.2, pw * 0.2, ph * 0.08);
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(px + pw * 0.42, py + ph * 0.21, pw * 0.16, ph * 0.05);
+      break;
+    case 'castelo':
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(px + pw * 0.15, py + ph * 0.15, pw * 0.7, ph * 0.85);
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(px, py, pw * 0.25, ph * 0.4);
+      ctx.fillRect(px + pw * 0.75, py, pw * 0.25, ph * 0.4);
+      ctx.fillRect(px, py + ph * 0.55, pw * 0.25, ph * 0.45);
+      ctx.fillRect(px + pw * 0.75, py + ph * 0.55, pw * 0.25, ph * 0.45);
+      ctx.fillStyle = '#7f1d1d';
+      ctx.beginPath();
+      ctx.moveTo(px - 2, py);
+      ctx.lineTo(px + pw * 0.125, py - ph * 0.15);
+      ctx.lineTo(px + pw * 0.25, py);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(px + pw * 0.75, py);
+      ctx.lineTo(px + pw * 0.875, py - ph * 0.15);
+      ctx.lineTo(px + pw + 2, py);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#1e293b';
+      ctx.beginPath();
+      ctx.moveTo(px + pw * 0.35, py + ph);
+      ctx.lineTo(px + pw * 0.35, py + ph * 0.72);
+      ctx.arc(px + pw / 2, py + ph * 0.72, pw * 0.15, Math.PI, 0);
+      ctx.lineTo(px + pw * 0.65, py + ph);
+      ctx.closePath();
+      ctx.fill();
+      break;
+    case 'dungeon':
+      ctx.fillStyle = 'rgba(0,0,0,0.25)';
+      ctx.beginPath();
+      ctx.ellipse(px + pw / 2, py + ph - 5, pw * 0.42, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#4b5563';
+      ctx.beginPath();
+      ctx.arc(px + pw / 2, py + ph * 0.55, pw * 0.48, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#6b7280';
+      ctx.beginPath();
+      ctx.arc(px + pw / 2, py + ph * 0.55, pw * 0.38, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#05060a';
+      ctx.beginPath();
+      ctx.moveTo(px + pw * 0.3, py + ph * 0.95);
+      ctx.lineTo(px + pw * 0.3, py + ph * 0.55);
+      ctx.arc(px + pw / 2, py + ph * 0.55, pw * 0.2, Math.PI, 0);
+      ctx.lineTo(px + pw * 0.7, py + ph * 0.95);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#22c55e';
+      ctx.beginPath();
+      ctx.arc(px + pw * 0.2, py + ph * 0.85, 3, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+    case 'barco_pequeno':
+    case 'barco_medio':
+    case 'barco_grande':
+      ctx.fillStyle = '#78350f';
+      ctx.beginPath();
+      ctx.ellipse(px + pw / 2, py + ph * 0.7, pw * 0.45, ph * 0.22, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(px + pw * 0.45, py + ph * 0.15, pw * 0.1, ph * 0.55);
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(px + pw * 0.55, py + ph * 0.15, pw * 0.25, ph * 0.12);
+      break;
+    case 'arqueiro':
+    case 'cavaleiro':
+    case 'piqueiro':
+    case 'besteiro':
+    case 'npc_cidadao':
+    case 'npc_guarda':
+    case 'npc_comerciante': {
+      const colors = {
+        arqueiro: '#38bdf8', cavaleiro: '#ef4444', piqueiro: '#a855f7', besteiro: '#f97316',
+        npc_cidadao: '#84cc16', npc_guarda: '#64748b', npc_comerciante: '#eab308'
+      };
+      const c = colors[obj.id] || '#38bdf8';
+      ctx.fillStyle = 'rgba(0,0,0,0.25)';
+      ctx.beginPath();
+      ctx.ellipse(px + pw / 2, py + ph - 4, pw * 0.28, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(px + pw * 0.38, py + ph * 0.65, pw * 0.1, ph * 0.25);
+      ctx.fillRect(px + pw * 0.52, py + ph * 0.65, pw * 0.1, ph * 0.25);
+      ctx.fillStyle = c;
+      ctx.fillRect(px + pw * 0.3, py + ph * 0.4, pw * 0.4, ph * 0.3);
+      ctx.fillStyle = '#eab68b';
+      ctx.beginPath();
+      ctx.arc(px + pw / 2, py + ph * 0.3, pw * 0.2, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+    }
+    default:
+      // Objeto desconhecido: caixa neutra, sem travar o jogo.
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(px + 2, py + 2, pw - 4, ph - 4);
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(px + 2, py + 2, pw - 4, ph - 4);
+  }
+}
+
+// ============================================================
+// RENDERIZAÇÃO — PERSONAGEM
+// ============================================================
+function drawPlayer() {
+  const px = player.x * CELL_SIZE;
+  const py = player.y * CELL_SIZE;
+  const cx = px + CELL_SIZE / 2;
+  const cy = py + CELL_SIZE / 2;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.beginPath();
+  ctx.ellipse(cx, py + CELL_SIZE - 5, CELL_SIZE * 0.28, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(cx - 6, cy + 6, 4, 8);
+  ctx.fillRect(cx + 2, cy + 6, 4, 8);
+
+  ctx.fillStyle = '#22d3ee';
+  ctx.beginPath();
+  ctx.arc(cx, cy - 3, 12, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#0e7490';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.fillStyle = '#f8fafc';
+  ctx.beginPath();
+  ctx.arc(cx, cy - 8, 6, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#0f172a';
+  const eyeOffset = player.facing === 'left' ? -2 : (player.facing === 'right' ? 2 : 0);
+  ctx.fillRect(cx - 3 + eyeOffset, cy - 9, 2, 2);
+  ctx.fillRect(cx + 1 + eyeOffset, cy - 9, 2, 2);
+}
+
+// ============================================================
+// LOOP DE RENDERIZAÇÃO
+// ============================================================
+function render() {
+  ctx.fillStyle = '#050a14';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  if (!world.loaded) {
+    ctx.fillStyle = '#64748b';
+    ctx.font = '600 14px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Nenhum mundo carregado', canvas.width / 2, canvas.height / 2 - 8);
+    ctx.font = '12px Inter, sans-serif';
+    ctx.fillStyle = '#475569';
+    ctx.fillText('Use "Carregar mundo" para abrir um JSON', canvas.width / 2, canvas.height / 2 + 14);
+    return;
+  }
+
+  const sector = world.sectors[curSector.x + ',' + curSector.y];
+  if (!sector) {
+    ctx.fillStyle = '#64748b';
+    ctx.font = '600 14px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Setor ' + curSector.x + ',' + curSector.y + ' não existe', canvas.width / 2, canvas.height / 2);
+    return;
+  }
+
+  for (let r = 0; r < GRID_SIZE; r++) {
+    for (let c = 0; c < GRID_SIZE; c++) {
+      drawTerrain(sector.terrain[r][c], c * CELL_SIZE, r * CELL_SIZE);
+    }
+  }
+
+  // Objetos ordenados por profundidade (base mais baixa desenha por cima)
+  const sorted = sector.objects.slice().sort((a, b) => (a.y + a.h) - (b.y + b.h));
+  for (const obj of sorted) {
+    drawObject(obj, obj.x * CELL_SIZE, obj.y * CELL_SIZE, obj.w * CELL_SIZE, obj.h * CELL_SIZE);
+  }
+
+  drawPlayer();
+}
+
+// ============================================================
+// INPUT
+// ============================================================
+function normalizeKey(e) {
+  const k = e.key;
+  if (k === 'ArrowUp' || k === 'w' || k === 'W') return 'up';
+  if (k === 'ArrowDown' || k === 's' || k === 'S') return 'down';
+  if (k === 'ArrowLeft' || k === 'a' || k === 'A') return 'left';
+  if (k === 'ArrowRight' || k === 'd' || k === 'D') return 'right';
+  return null;
+}
+
+document.addEventListener('keydown', (e) => {
+  const dir = normalizeKey(e);
+  if (!dir) return;
+  const tag = (document.activeElement && document.activeElement.tagName) || '';
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  e.preventDefault();
+  keysDown[dir] = true;
+});
+
+document.addEventListener('keyup', (e) => {
+  const dir = normalizeKey(e);
+  if (!dir) return;
+  keysDown[dir] = false;
+});
+
+window.addEventListener('blur', () => {
+  for (const k in keysDown) keysDown[k] = false;
+});
+
+function processMovement(now) {
+  if (!world.loaded || !hasSpawned) return;
+  if (now - lastMoveAt < MOVE_INTERVAL_MS) return;
+
+  // Prioriza direção vertical, depois horizontal — evita trombadas diagonais.
+  let dx = 0, dy = 0;
+  if (keysDown.up) { dy = -1; player.facing = 'up'; }
+  else if (keysDown.down) { dy = 1; player.facing = 'down'; }
+  else if (keysDown.left) { dx = -1; player.facing = 'left'; }
+  else if (keysDown.right) { dx = 1; player.facing = 'right'; }
+
+  if (dx === 0 && dy === 0) return;
+
+  const moved = tryMove(dx, dy);
+  lastMoveAt = now;
+  // Mesmo bloqueado, atualiza o "cooldown" — evita spammar beeps/movimentos.
+  if (!moved) {
+    // Sem som no jogo — nada a fazer.
+  }
+}
+
+function loop() {
+  const now = performance.now();
+  processMovement(now);
+  render();
+  requestAnimationFrame(loop);
+}
+
+// ============================================================
+// CARREGAMENTO DE ARQUIVO
+// ============================================================
+document.getElementById('fileInput').addEventListener('change', (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+
+  setState('Lendo arquivo…');
+  setError(null);
+
+  const reader = new FileReader();
+  reader.onerror = () => {
+    setError('Não foi possível ler o arquivo selecionado.');
+    setState('Erro');
+  };
+  reader.onload = (ev) => {
+    let raw;
+    try {
+      raw = JSON.parse(ev.target.result);
+    } catch (err) {
+      setError('O arquivo não é um JSON válido: ' + err.message);
+      setState('Erro');
+      return;
+    }
+
+    const sectors = normalizeWorld(raw);
+    if (!sectors || Object.keys(sectors).length === 0) {
+      setError('O JSON não contém setores válidos no formato esperado.');
+      setState('Erro');
+      return;
+    }
+
+    world.sectors = sectors;
+    world.loaded = true;
+
+    if (!respawnPlayer()) {
+      setState('Sem spawn');
+      return;
+    }
+
+    const sectorCount = Object.keys(sectors).length;
+    setState('OK (' + sectorCount + ' setor' + (sectorCount === 1 ? '' : 'es') + ')');
+    setError(null);
+  };
+  reader.readAsText(file);
+
+  // Permite recarregar o mesmo arquivo depois
+  e.target.value = '';
+});
+
+// ============================================================
+// BOTÃO "REINICIAR POSIÇÃO"
+// ============================================================
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (!world.loaded) {
+    setError('Carregue um mundo antes de reiniciar a posição.');
+    return;
+  }
+  if (respawnPlayer()) {
+    setState('Posição reiniciada');
+  }
+});
+
+// ============================================================
+// INICIALIZAÇÃO
+// ============================================================
+updateHUD();
+setState('Aguardando mapa');
+requestAnimationFrame(loop);
+
+</script>
 </body>
 </html>
