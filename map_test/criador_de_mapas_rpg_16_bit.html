@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Integração de Dungeon: abertura por duplo clique, IDs persistentes e retorno ao setor de origem. -->
     <title>Criador de Mapas RPG 2D - 16-Bit Retro</title>
     
     <!-- Bibliotecas Externas -->
@@ -191,6 +192,7 @@
                             <button class="palette-btn" data-id="portao" data-type="object" data-w="2" data-h="2">🚪 Portão (2x2)</button>
                             <button class="palette-btn" data-id="muralha" data-type="object" data-w="1" data-h="1">🧱 Muralha (1x1)</button>
                             <button class="palette-btn text-rose-300 border-rose-500/30" data-id="vulcao" data-type="object" data-w="3" data-h="3">🌋 Vulcão (3x3)</button>
+                            <button class="palette-btn text-stone-300 border-stone-500/40" data-id="dungeon" data-type="dungeon" data-w="3" data-h="3">🕳️ Dungeon (3x3)</button>
                             <!-- Barcos -->
                             <button class="palette-btn" data-id="barco_pequeno" data-type="object" data-w="1" data-h="2">🚣 Barco P (1x2)</button>
                             <button class="palette-btn" data-id="barco_medio" data-type="object" data-w="2" data-h="3">⛵ Barco M (2x3)</button>
@@ -568,7 +570,7 @@
             arvore: 'decoration', pinheiro: 'decoration', coqueiro: 'decoration', savana: 'decoration', cacto: 'decoration',
             arbusto_grama: 'decoration', arbusto_neve: 'decoration', arbusto_praia: 'decoration', arbusto_mangue: 'decoration',
             casa: 'structures', casa_2andares: 'structures', torre: 'structures', portao: 'structures',
-            muralha: 'structures', vulcao: 'structures', castelo: 'structures',
+            muralha: 'structures', vulcao: 'structures', castelo: 'structures', dungeon: 'structures',
             barco_pequeno: 'structures', barco_medio: 'structures', barco_grande: 'structures',
             arqueiro: 'units', cavaleiro: 'units', piqueiro: 'units', besteiro: 'units',
             // NPCs (ainda sem botão na paleta) — usam a mesma camada "units" das unidades militares.
@@ -579,7 +581,7 @@
             arvore: 'bloqueado', pinheiro: 'bloqueado', coqueiro: 'bloqueado', savana: 'andavel', cacto: 'bloqueado',
             arbusto_grama: 'andavel', arbusto_neve: 'andavel', arbusto_praia: 'andavel', arbusto_mangue: 'andavel',
             casa: 'bloqueado', casa_2andares: 'bloqueado', torre: 'bloqueado', portao: 'bloqueado',
-            muralha: 'bloqueado', vulcao: 'especial', castelo: 'bloqueado',
+            muralha: 'bloqueado', vulcao: 'especial', castelo: 'bloqueado', dungeon: 'bloqueado',
             barco_pequeno: 'andavel', barco_medio: 'andavel', barco_grande: 'andavel',
             arqueiro: 'bloqueado', cavaleiro: 'bloqueado', piqueiro: 'bloqueado', besteiro: 'bloqueado',
             npc_cidadao: 'andavel', npc_guarda: 'bloqueado', npc_comerciante: 'andavel'
@@ -641,6 +643,110 @@
             return TERRAIN_COLLISION_MAP[sector.terrain[row][col]] || 'andavel';
         }
 
+        // ─────────────────────────────────────────────────────────────
+        // Dungeon IDs — fonte única de verdade
+        // ─────────────────────────────────────────────────────────────
+        // Um dungeonId está reservado se pertence a uma Dungeon do mundo ou a um
+        // interior que já foi salvo no localStorage do editor de dungeons.
+        // Assim, apagar uma estrutura externa não libera seu ID enquanto o interior
+        // salvo ainda existir.
+        const DUNGEON_EDITOR_STORAGE_PREFIX = 'rpgDungeonEditor_v1_';
+
+        function getSavedDungeonIdsFromStorage() {
+            const ids = new Set();
+            try {
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (!key || !key.startsWith(DUNGEON_EDITOR_STORAGE_PREFIX)) continue;
+                    const id = key.slice(DUNGEON_EDITOR_STORAGE_PREFIX.length);
+                    if (id && id !== 'index') ids.add(id);
+                }
+            } catch (e) {
+                // Se o navegador bloquear localStorage, o criador continua utilizável.
+            }
+            return ids;
+        }
+
+        function collectReservedDungeonIds() {
+            const reserved = new Set();
+            for (const key in worldSectors) {
+                const sector = worldSectors[key];
+                if (!sector || !Array.isArray(sector.objects)) continue;
+                for (const o of sector.objects) {
+                    if ((o.type === 'dungeon' || o.id === 'dungeon') &&
+                        typeof o.dungeonId === 'string' && o.dungeonId.trim()) {
+                        reserved.add(o.dungeonId);
+                    }
+                }
+            }
+            for (const id of getSavedDungeonIdsFromStorage()) reserved.add(id);
+            return reserved;
+        }
+
+        // Gera um identificador no formato dungeon_NNN que não colide com nenhum ID
+        // existente no mundo nem com um interior salvo no navegador.
+        function generateDungeonId() {
+            const reserved = collectReservedDungeonIds();
+            let max = 0;
+            for (const id of reserved) {
+                const m = typeof id === 'string' && id.match(/^dungeon_(\d+)$/);
+                if (m) max = Math.max(max, parseInt(m[1], 10));
+            }
+            let next = max + 1;
+            let candidate = 'dungeon_' + String(next).padStart(3, '0');
+            while (reserved.has(candidate)) {
+                next++;
+                candidate = 'dungeon_' + String(next).padStart(3, '0');
+            }
+            return candidate;
+        }
+
+        // Segunda passada depois de carregar TODOS os setores. Preserva IDs existentes
+        // (inclusive IDs personalizados), corrige apenas valores ausentes/vazios e
+        // reatribui novos IDs às ocorrências duplicadas posteriores.
+        function assignMissingDungeonIds() {
+            const seen = new Set();
+            const pending = [];
+
+            for (const key in worldSectors) {
+                const sector = worldSectors[key];
+                if (!sector || !Array.isArray(sector.objects)) continue;
+                for (const o of sector.objects) {
+                    if (o.type !== 'dungeon' && o.id !== 'dungeon') continue;
+                    // Em projetos antigos, a estrutura podia estar marcada como object.
+                    if (o.id === 'dungeon') o.type = 'dungeon';
+                    const id = o.dungeonId;
+                    if (typeof id !== 'string' || !id.trim() || seen.has(id)) {
+                        o.dungeonId = null;
+                        pending.push(o);
+                    } else {
+                        seen.add(id);
+                    }
+                }
+            }
+
+            // Inclui os interiores salvos, sem desassociar IDs válidos já presentes.
+            const reserved = collectReservedDungeonIds();
+            for (const id of reserved) seen.add(id);
+
+            let max = 0;
+            for (const id of reserved) {
+                const m = typeof id === 'string' && id.match(/^dungeon_(\d+)$/);
+                if (m) max = Math.max(max, parseInt(m[1], 10));
+            }
+
+            for (const o of pending) {
+                let candidate;
+                do {
+                    max++;
+                    candidate = 'dungeon_' + String(max).padStart(3, '0');
+                } while (reserved.has(candidate) || seen.has(candidate));
+                o.dungeonId = candidate;
+                reserved.add(candidate);
+                seen.add(candidate);
+            }
+        }
+
         let entityCounter = 0;
         function generateUid() {
             entityCounter += 1;
@@ -663,7 +769,9 @@
                     sector.terrain[r][c] = cell.terrain || 'grama';
                     if (cell.item) {
                         const it = cell.item;
-                        const entityType = it.customImg ? 'custom' : (OBJECT_LAYER_MAP[it.id] === 'units' ? 'unit' : 'object');
+                        const entityType = it.customImg ? 'custom' :
+                            ((it.type === 'dungeon' || it.id === 'dungeon') ? 'dungeon' :
+                            (OBJECT_LAYER_MAP[it.id] === 'units' ? 'unit' : 'object'));
                         const entity = {
                             uid: generateUid(),
                             id: it.id,
@@ -672,9 +780,13 @@
                             w: it.w || 1, h: it.h || 1,
                             layer: defaultLayerFor(it.id, entityType),
                             rotation: 0,
-                            collisionType: defaultCollisionFor(it.id, 'object'),
+                            collisionType: defaultCollisionFor(it.id, entityType),
                             customImg: it.customImg || null
                         };
+                        if (entity.type === 'dungeon') {
+                            entity.dungeonId = (typeof it.dungeonId === 'string' && it.dungeonId.trim())
+                                ? it.dungeonId : null;
+                        }
                         const stats = defaultStatsFor(it.id, entityType);
                         if (stats) Object.assign(entity, stats);
                         sector.objects.push(entity);
@@ -709,6 +821,14 @@
                         collisionType: normalizeCollisionValue(o.collisionType !== undefined ? o.collisionType : o.collision, o.id, o.type),
                         customImg: o.customImg || null
                     };
+                    // Dungeon: preserva o ID já existente e deixa ausências para a segunda
+                    // passada (assignMissingDungeonIds), depois que todos os setores forem carregados.
+                    if (entity.type === 'dungeon' || entity.id === 'dungeon') {
+                        // Corrige projetos antigos que tinham id=dungeon mas type=object.
+                        entity.type = 'dungeon';
+                        entity.dungeonId = (typeof o.dungeonId === 'string' && o.dungeonId.trim())
+                            ? o.dungeonId : null;
+                    }
                     // Unidades/NPCs: preserva os atributos do arquivo se existirem; preenche com
                     // o padrão qualquer campo que esteja faltando (arquivos antigos não têm nenhum).
                     const defaults = defaultStatsFor(entity.id, entity.type);
@@ -926,6 +1046,7 @@
             const migrated = {};
             for (const key in payload.sectors) migrated[key] = normalizeSector(payload.sectors[key]);
             worldSectors = migrated;
+            assignMissingDungeonIds(); // 2ª passada: todos os setores já estão carregados
             currentSectorX = 0; currentSectorY = 0;
             undoStack = []; redoStack = []; // histórico não atravessa uma restauração
             updateHistoryButtons();
@@ -1853,6 +1974,54 @@
                 // Bandeira
                 ctx.fillStyle = '#ef4444'; ctx.fillRect(x + w/2 + 3, y + 10, 20, 12);
                 ctx.fillStyle = '#fde047'; ctx.fillRect(x + w/2 + 3, y + 10, 6, 12);
+            } else if (id === 'dungeon') {
+                // Caverna rochosa 3x3 com entrada escura (coordenadas fixas: render estável a cada frame)
+                const P = (pts) => { ctx.beginPath(); pts.forEach(([px, py], i) => i ? ctx.lineTo(x + px, y + py) : ctx.moveTo(x + px, y + py)); ctx.closePath(); };
+                ctx.fillStyle = 'rgba(0,0,0,0.25)';
+                ctx.beginPath(); ctx.ellipse(x + w/2, y + h - 5, w/2 - 8, 8, 0, 0, Math.PI*2); ctx.fill();
+                // Massa de rocha irregular
+                P([[8,138],[3,102],[13,66],[30,36],[56,13],[90,11],[115,30],[133,62],[141,102],[136,138]]);
+                ctx.fillStyle = '#4b5563'; ctx.fill();
+                ctx.strokeStyle = 'rgba(0,0,0,0.45)'; ctx.lineWidth = 2; ctx.stroke();
+                P([[16,136],[12,102],[22,70],[38,44],[60,24],[86,22],[108,38],[124,66],[130,102],[126,136]]);
+                ctx.fillStyle = '#6b7280'; ctx.fill();
+                P([[30,42],[56,21],[84,19],[72,34],[46,52]]);
+                ctx.fillStyle = '#9ca3af'; ctx.fill();            // luz no topo
+                P([[110,38],[125,66],[131,102],[127,136],[112,136],[116,92],[108,62]]);
+                ctx.fillStyle = '#374151'; ctx.fill();            // sombra lateral
+                // Blocos/rachaduras
+                ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 1.5;
+                [[22,84,38,78],[104,80,120,88],[48,40,62,52],[92,46,104,58],[16,112,30,118],[116,112,128,106]].forEach(([a,b,c,d]) => {
+                    ctx.beginPath(); ctx.moveTo(x + a, y + b); ctx.lineTo(x + c, y + d); ctx.stroke();
+                });
+                // Entrada: arco preto com fundo levemente mais claro (profundidade)
+                ctx.fillStyle = '#05060a';
+                ctx.beginPath(); ctx.moveTo(x + 44, y + 138); ctx.lineTo(x + 44, y + 94);
+                ctx.arc(x + 72, y + 94, 28, Math.PI, 0); ctx.lineTo(x + 100, y + 138); ctx.closePath(); ctx.fill();
+                ctx.fillStyle = '#0d1018';
+                ctx.beginPath(); ctx.moveTo(x + 54, y + 138); ctx.lineTo(x + 54, y + 98);
+                ctx.arc(x + 72, y + 98, 18, Math.PI, 0); ctx.lineTo(x + 90, y + 138); ctx.closePath(); ctx.fill();
+                ctx.fillStyle = '#020305';
+                ctx.beginPath(); ctx.moveTo(x + 60, y + 138); ctx.lineTo(x + 60, y + 102);
+                ctx.arc(x + 72, y + 102, 12, Math.PI, 0); ctx.lineTo(x + 84, y + 138); ctx.closePath(); ctx.fill();
+                // Pedras do arco
+                for (let i = 0; i <= 6; i++) {
+                    const a = Math.PI + i * Math.PI / 6;
+                    const px = x + 72 + Math.cos(a) * 34, py = y + 94 + Math.sin(a) * 34;
+                    ctx.fillStyle = i % 2 ? '#6b7280' : '#9ca3af';
+                    ctx.fillRect(px - 6, py - 6, 12, 11);
+                    ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = 1; ctx.strokeRect(px - 6, py - 6, 12, 11);
+                }
+                ctx.fillStyle = '#9ca3af'; ctx.fillRect(x + 32, y + 128, 14, 10); ctx.fillRect(x + 98, y + 128, 14, 10);
+                ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.strokeRect(x + 32, y + 128, 14, 10); ctx.strokeRect(x + 98, y + 128, 14, 10);
+                // Vegetação: musgo/capim e um arbusto
+                [[20,100],[124,94],[40,34],[102,28],[12,128],[130,130],[70,18]].forEach(([gx, gy], i) => {
+                    ctx.fillStyle = i % 2 ? '#15803d' : '#22c55e';
+                    ctx.beginPath(); ctx.moveTo(x + gx - 4, y + gy + 4); ctx.lineTo(x + gx - 1, y + gy - 6);
+                    ctx.lineTo(x + gx + 2, y + gy + 4); ctx.lineTo(x + gx + 5, y + gy - 4); ctx.lineTo(x + gx + 7, y + gy + 4); ctx.closePath(); ctx.fill();
+                });
+                ctx.fillStyle = '#166534'; ctx.beginPath(); ctx.arc(x + 17, y + 122, 7, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#22c55e'; ctx.beginPath(); ctx.arc(x + 15, y + 119, 3.5, 0, Math.PI*2); ctx.fill();
             } else if (id === 'castelo') {
                 ctx.fillStyle = 'rgba(0,0,0,0.2)';
                 ctx.beginPath(); ctx.ellipse(x + w/2, y + h - 4, w/2 - 10, 8, 0, 0, Math.PI*2); ctx.fill();
@@ -2120,6 +2289,47 @@
         canvas.addEventListener('auxclick', (e) => { if (e.button === 1) e.preventDefault(); });
         canvas.addEventListener('mousedown', (e) => { if (e.button === 1) e.preventDefault(); });
 
+        // Duplo clique em uma estrutura Dungeon abre o editor de interior separado.
+        // O alvo é lido pela posição real do evento para evitar depender de uma seleção antiga.
+        canvas.addEventListener('dblclick', (e) => {
+            if (isMapReadOnly() || currentTool !== 'select') return;
+
+            const { col, row } = getCellFromEvent(e);
+            if (col < 0 || col >= GRID_SIZE || row < 0 || row >= GRID_SIZE) return;
+
+            const sector = peekSector(currentSectorX, currentSectorY);
+            const obj = getObjectAt(sector, col, row);
+            if (!obj || (obj.type !== 'dungeon' && obj.id !== 'dungeon')) return;
+
+            if (typeof obj.dungeonId !== 'string' || !obj.dungeonId.trim()) {
+                // Recuperação defensiva: normalmente os IDs já foram atribuídos na criação/carregamento.
+                assignMissingDungeonIds();
+            }
+            if (typeof obj.dungeonId !== 'string' || !obj.dungeonId.trim()) {
+                alert('Não foi possível identificar esta Dungeon. Salve o projeto e tente novamente.');
+                return;
+            }
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Salva agora, sem depender do temporizador de autosave de 2 segundos.
+            if (autosaveTimer) {
+                clearTimeout(autosaveTimer);
+                autosaveTimer = null;
+            }
+            performAutosave();
+
+            const params = new URLSearchParams();
+            params.set('id', obj.dungeonId);
+            params.set('returnTo', './criador_de_mapas_rpg_16_bit.html');
+            params.set('sx', String(currentSectorX));
+            params.set('sy', String(currentSectorY));
+            params.set('px', String(obj.x));
+            params.set('py', String(obj.y));
+            window.location.href = './rpg_dungeon_editor.html?' + params.toString();
+        });
+
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
                 const tag = (document.activeElement && document.activeElement.tagName) || '';
@@ -2187,6 +2397,7 @@
                 // Unidades/NPCs recebem automaticamente seus atributos padrão (name/hp/maxHp/attack/defense/range/faction).
                 const stats = defaultStatsFor(newEntity.id, newEntity.type);
                 if (stats) Object.assign(newEntity, stats);
+                if (newEntity.type === 'dungeon') newEntity.dungeonId = generateDungeonId(); // id único por dungeon
 
                 sector.objects.push(newEntity);
                 playBeep(650);
@@ -2303,6 +2514,7 @@
             }
             beginHistoryAction();
             const newObj = { ...clipboardEntity, uid: generateUid(), x: px, y: py };
+            if (newObj.type === 'dungeon') newObj.dungeonId = generateDungeonId();
             sector.objects.push(newObj);
             selectedObjectRef = { uid: newObj.uid };
             commitHistoryAction();
@@ -2768,6 +2980,7 @@
                     }
 
                     worldSectors = migrated;
+                    assignMissingDungeonIds(); // 2ª passada: todos os setores já estão carregados
                     currentSectorX = 0;
                     currentSectorY = 0;
                     undoStack = []; redoStack = []; // histórico não atravessa um carregamento manual
@@ -3038,15 +3251,74 @@
         // Inicialização e Loop Principal
         getOrCreateSector(0, 0);
 
-        // Ao abrir a página, verifica se existe um autosave e pergunta se quer restaurar
-        (function checkAutosaveOnLoad() {
+        // Retorno do editor de dungeons: restaura silenciosamente o mundo, abre o setor
+        // de origem e tenta selecionar a estrutura pelo ID persistente (com fallback x/y).
+        // A URL é limpa no fim para que F5 não repita o fluxo de retorno.
+        (function initializeFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            const isReturn = params.get('return') === '1';
+
+            if (isReturn) {
+                const payload = loadAutosavePayload();
+                if (payload && payload.sectors) {
+                    restoreFromAutosave(true);
+                } else {
+                    console.warn('[retorno] Nenhum autosave encontrado para restaurar.');
+                }
+
+                const sx = parseInt(params.get('sx'), 10);
+                const sy = parseInt(params.get('sy'), 10);
+                if (Number.isFinite(sx) && Number.isFinite(sy)) {
+                    currentSectorX = sx;
+                    currentSectorY = sy;
+                    updateSectorUI();
+                }
+
+                const targetDungeonId = params.get('id');
+                const targetPx = parseInt(params.get('px'), 10);
+                const targetPy = parseInt(params.get('py'), 10);
+                const sector = peekSector(currentSectorX, currentSectorY);
+                let target = null;
+
+                if (targetDungeonId) {
+                    target = sector.objects.find(o =>
+                        (o.type === 'dungeon' || o.id === 'dungeon') && o.dungeonId === targetDungeonId
+                    ) || null;
+                }
+                if (!target && Number.isFinite(targetPx) && Number.isFinite(targetPy)) {
+                    target = sector.objects.find(o =>
+                        (o.type === 'dungeon' || o.id === 'dungeon') &&
+                        o.x === targetPx && o.y === targetPy
+                    ) || null;
+                }
+
+                if (target) {
+                    setTool('select');
+                    selectedObjectRef = { uid: target.uid };
+                    updateSelectionUI();
+                    playBeep(700);
+                } else {
+                    selectedObjectRef = null;
+                    updateSelectionUI();
+                    console.warn('[retorno] A estrutura Dungeon não foi encontrada no setor de origem.');
+                }
+
+                try {
+                    window.history.replaceState(null, '', window.location.pathname);
+                } catch (err) {
+                    // Não é crítico se o contexto não permitir limpar a URL.
+                }
+                return; // Não exibe o prompt normal ao retornar do interior.
+            }
+
+            // Fluxo normal: preserva o comportamento existente de perguntar sobre autosave.
             const payload = loadAutosavePayload();
             if (payload && payload.sectors && Object.keys(payload.sectors).length > 0) {
                 const when = payload.savedAt ? new Date(payload.savedAt).toLocaleString('pt-BR') : 'data desconhecida';
                 if (confirm(`Encontramos um autosave salvo em ${when}. Deseja restaurar esse mundo?`)) {
                     restoreFromAutosave(true);
                 } else {
-                    updateAutosaveLabel(payload.savedAt); // mostra quando foi o último autosave, mesmo sem restaurar
+                    updateAutosaveLabel(payload.savedAt);
                 }
             }
         })();
